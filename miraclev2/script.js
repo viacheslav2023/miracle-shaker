@@ -98,7 +98,7 @@ function closeMenu() {
 var walletPubkey = null;
 var walletProvider = null;
 var TACO_MINT = '3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr';
-var RPC = 'https://api.mainnet-beta.solana.com';
+var RPC = 'https://solana-mainnet.g.alchemy.com/v2/demo';
 
 function showWalletModal() {
   if (walletPubkey) { disconnectWallet(); return; }
