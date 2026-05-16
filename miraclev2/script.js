@@ -120,13 +120,6 @@ async function rpc(method, params) {
 
 async function getSolBalance(pk) {
   try {
-    if (walletProvider && walletProvider.publicKey) {
-      var conn = new window.solanaWeb3.Connection('https://rpc.ankr.com/solana');
-      var bal = await conn.getBalance(walletProvider.publicKey);
-      return bal / 1e9;
-    }
-  } catch(e) {}
-  try {
     var r = await rpc('getBalance', [pk, {commitment:'confirmed'}]);
     return ((r && r.value) || 0) / 1e9;
   } catch(e) { return 0; }
@@ -164,45 +157,9 @@ async function updateWalletUI(pubkey) {
   var addrEl = document.getElementById('wp-addr');
   if (addrEl) addrEl.textContent = shortAddr(addr);
 
-  // Try multiple RPCs
-  var rpcs = [
-    'https://rpc.ankr.com/solana',
-    'https://api.mainnet-beta.solana.com',
-    'https://solana-api.projectserum.com'
-  ];
-
-  var sol = 0, taco = 0;
-
-  for (var i = 0; i < rpcs.length; i++) {
-    try {
-      var res = await fetch(rpcs[i], {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({jsonrpc:'2.0',id:1,method:'getBalance',params:[addr,{commitment:'confirmed'}]})
-      });
-      var data = await res.json();
-      if (data.result && data.result.value !== undefined) {
-        sol = data.result.value / 1e9;
-        break;
-      }
-    } catch(e) { continue; }
-  }
-
-  for (var j = 0; j < rpcs.length; j++) {
-    try {
-      var res2 = await fetch(rpcs[j], {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenAccountsByOwner',params:[addr,{mint:TACO_MINT},{encoding:'jsonParsed',commitment:'confirmed'}]})
-      });
-      var data2 = await res2.json();
-      var accs = (data2.result && data2.result.value) || [];
-      if (accs.length) {
-        taco = accs[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
-        break;
-      }
-    } catch(e) { continue; }
-  }
+  // fetch balances
+  var sol = await getSolBalance(addr);
+  var taco = await getTacoBalance(addr);
 
   var solEl = document.getElementById('wp-sol');
   var tacoEl = document.getElementById('wp-taco');
