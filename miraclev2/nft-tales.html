@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NFT Tales — 1200 NFTs · Miracle Shaker</title>
+  <meta name="description" content="1200 unique NFTs on Solana. Mint for SOL, sell for TACO.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+.nft-classes { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; background:#1e1e1e; margin-top:44px; }
+.nft-class { background:#111; padding:24px; text-align:center; position:relative; }
+.nft-class .badge { font-family:monospace; font-size:9px; letter-spacing:2px; padding:4px 10px; display:inline-block; margin-bottom:14px; }
+.legendary .badge { background:rgba(255,209,102,0.15); color:#ffd166; border:1px solid rgba(255,209,102,0.4); }
+.epic .badge { background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid rgba(168,85,247,0.4); }
+.rare .badge { background:rgba(59,130,246,0.15); color:#3b82f6; border:1px solid rgba(59,130,246,0.4); }
+.common .badge { background:rgba(136,136,128,0.15); color:#888; border:1px solid rgba(136,136,128,0.4); }
+.nft-class .count { font-family:"Bebas Neue",Impact,sans-serif; font-size:48px; color:#f0ece4; display:block; margin:8px 0; }
+.nft-class .count-label { font-family:monospace; font-size:10px; color:#555; letter-spacing:1px; }
+.nft-class .drop { font-family:monospace; font-size:11px; color:#4ade80; margin-top:14px; display:block; }
+.mint-flow { display:grid; grid-template-columns:1fr 1fr; gap:2px; background:#1e1e1e; }
+.mint-cell { background:#111; padding:28px; }
+.mint-cell h3 { font-family:monospace; font-size:10px; letter-spacing:2px; color:#ff6b1a; margin-bottom:12px; }
+.mint-cell p { font-size:14px; color:#888; font-weight:300; line-height:1.7; }
+@media(max-width:900px){ .nft-classes,.mint-flow{ grid-template-columns:1fr 1fr; } }
+@media(max-width:500px){ .nft-classes,.mint-flow{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<nav id="main-nav" style="position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(8,8,8,0.96);backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-bottom-color 0.3s;box-sizing:border-box;">
+  <div style="max-width:1200px;margin:0 auto;padding:0 24px;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;">
+    <a href="index.html" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:19px;letter-spacing:4px;color:#ff6b1a;text-decoration:none;flex-shrink:0;">MIRACLE SHAKER</a>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <div style="display:flex;gap:2px;background:#1e1e1e;padding:2px;">
+        <button class="lang-btn" data-lang="en" style="font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:none;color:#555;padding:5px 8px;cursor:pointer;">EN</button>
+        <button class="lang-btn" data-lang="ru" style="font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:none;color:#555;padding:5px 8px;cursor:pointer;">RU</button>
+        <button class="lang-btn" data-lang="ua" style="font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:none;color:#555;padding:5px 8px;cursor:pointer;">UA</button>
+      </div>
+      <button id="wallet-btn" style="font-family:monospace;font-size:9px;letter-spacing:1px;color:#888;background:none;border:1px solid #2a2a2a;padding:7px 12px;cursor:pointer;white-space:nowrap;">WALLET</button>
+      <a href="https://app.printr.money/trade/3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr" id="nav-buy" target="_blank" style="font-family:monospace;font-size:9px;letter-spacing:1px;color:#080808;background:#ff6b1a;padding:7px 12px;text-decoration:none;font-weight:700;white-space:nowrap;">BUY TACO</a>
+      <button id="nav-burger" style="background:none;border:1px solid #2a2a2a;padding:8px 9px;cursor:pointer;display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+        <span style="display:block;width:17px;height:1px;background:#f0ece4;"></span>
+        <span style="display:block;width:17px;height:1px;background:#f0ece4;"></span>
+        <span style="display:block;width:17px;height:1px;background:#f0ece4;"></span>
+      </button>
+    </div>
+  </div>
+</nav>
+<div id="nav-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:498;"></div>
+<div id="slide-menu" style="position:fixed;top:0;right:0;width:260px;height:100vh;background:#0d0d0d;border-left:1px solid #1e1e1e;z-index:499;transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;padding:20px 24px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
+    <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:3px;color:#ff6b1a;">MENU</span>
+    <button id="menu-close" style="background:none;border:1px solid #2a2a2a;color:#888;width:30px;height:30px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">&#x2715;</button>
+  </div>
+  <a href="index.html" id="nav-home" style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#888;text-decoration:none;padding:13px 0;border-bottom:1px solid #1e1e1e;display:block;">HOME</a>
+  <a href="shaker.html" id="nav-shaker" style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#888;text-decoration:none;padding:13px 0;border-bottom:1px solid #1e1e1e;display:block;">SHAKER</a>
+  <a href="nft-tales.html" id="nav-nft" style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#888;text-decoration:none;padding:13px 0;border-bottom:1px solid #1e1e1e;display:block;">NFT TALES</a>
+  <a href="game.html" id="nav-game" style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#888;text-decoration:none;padding:13px 0;border-bottom:1px solid #1e1e1e;display:block;">GAME</a>
+  <a href="faq.html" id="nav-faq" style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#888;text-decoration:none;padding:13px 0;display:block;">FAQ</a>
+  <div style="margin-top:auto;padding-top:20px;border-top:1px solid #1e1e1e;display:flex;flex-direction:column;gap:8px;">
+    <a href="https://app.printr.money/trade/3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr" target="_blank" style="font-family:monospace;font-size:10px;letter-spacing:1px;background:#ff6b1a;color:#080808;padding:11px;text-decoration:none;font-weight:700;display:block;text-align:center;">BUY TACO</a>
+    <a href="https://t.me/+Bcx42tPC-DE1NTRk" target="_blank" style="font-family:monospace;font-size:10px;letter-spacing:1px;border:1px solid #2a2a2a;color:#888;padding:10px;text-decoration:none;display:block;text-align:center;">TELEGRAM</a>
+  </div>
+</div>
+
+<div class="page-hero">
+  <div class="page-hero-bg"></div>
+  <div class="hero-grid-bg"></div>
+  <div style="position:relative;z-index:1;">
+    <span class="label" data-en="NFT Collection" data-ru="NFT &#x41A;&#x43E;&#x43B;&#x43B;&#x435;&#x43A;&#x446;&#x438;&#x44F;" data-ua="NFT &#x41A;&#x43E;&#x43B;&#x435;&#x43A;&#x446;&#x456;&#x44F;">NFT Collection</span>
+    <h1 class="display-title" data-en="YOUR PASS<br>INTO THE<br><span>MIRACLE WORLD</span>" data-ru="&#x412;&#x410;&#x428; &#x41F;&#x420;&#x41E;&#x41F;&#x423;&#x421;&#x41A;<br>&#x412; &#x41C;&#x418;&#x420;<br><span>MIRACLE SHAKER</span>" data-ua="&#x412;&#x410;&#x428; &#x41F;&#x420;&#x41E;&#x41F;&#x423;&#x421;&#x41A;<br>&#x414;&#x41E; &#x421;&#x412;&#x406;&#x422;&#x423;<br><span>MIRACLE SHAKER</span>">YOUR PASS<br>INTO THE<br><span>MIRACLE WORLD</span></h1>
+    <p class="body-lead" style="margin-top:16px;max-width:560px;" data-en="1200 unique NFTs across 4 rarity classes. Your ticket to everything Miracle Shaker builds &#x2014; staking bonuses, campaign rewards, Telegram marketplace access, and priority entry to the Labyrinth game." data-ru="1200 &#x443;&#x43D;&#x438;&#x43A;&#x430;&#x43B;&#x44C;&#x43D;&#x44B;&#x445; NFT &#x432; 4 &#x43A;&#x43B;&#x430;&#x441;&#x441;&#x430;&#x445; &#x440;&#x435;&#x434;&#x43A;&#x43E;&#x441;&#x442;&#x438;. &#x412;&#x430;&#x448; &#x431;&#x438;&#x43B;&#x435;&#x442; &#x43A;&#x43E; &#x432;&#x441;&#x435;&#x43C;&#x443;, &#x447;&#x442;&#x43E; &#x441;&#x442;&#x440;&#x43E;&#x438;&#x442; Miracle Shaker." data-ua="1200 &#x443;&#x43D;&#x456;&#x43A;&#x430;&#x43B;&#x44C;&#x43D;&#x438;&#x445; NFT &#x443; 4 &#x43A;&#x43B;&#x430;&#x441;&#x430;&#x445;. &#x412;&#x430;&#x448; &#x43A;&#x432;&#x438;&#x442;&#x43E;&#x43A; &#x434;&#x43E; &#x432;&#x441;&#x44C;&#x43E;&#x433;&#x43E;, &#x449;&#x43E; &#x431;&#x443;&#x434;&#x443;&#x454; &#x440;&#x43E;&#x431;&#x438;&#x442;&#x438; Miracle Shaker.">1200 unique NFTs across 4 rarity classes. Your ticket to everything Miracle Shaker builds &#x2014; staking bonuses, campaign rewards, Telegram marketplace access, and priority entry to the Labyrinth game.</p>
+    <div style="margin-top:28px;display:inline-block;background:#1e1e1e;padding:14px 20px;">
+      <span style="font-family:monospace;font-size:11px;color:#888;" data-en="Mint: SOL &#xB7; Trade: TACO &#xB7; Total: 1200 NFTs" data-ru="&#x41C;&#x438;&#x43D;&#x442;: SOL &#xB7; &#x422;&#x43E;&#x440;&#x433;&#x43E;&#x432;&#x43B;&#x44F;: TACO &#xB7; &#x412;&#x441;&#x435;&#x433;&#x43E;: 1200 NFT" data-ua="&#x41C;&#x456;&#x43D;&#x442;: SOL &#xB7; &#x422;&#x43E;&#x440;&#x433;&#x456;&#x432;&#x43B;&#x44F;: TACO &#xB7; &#x412;&#x441;&#x44C;&#x43E;&#x433;&#x43E;: 1200 NFT">Mint: SOL &#xB7; Trade: TACO &#xB7; Total: 1200 NFTs</span>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container">
+    <span class="label reveal" data-en="Rarity Classes" data-ru="&#x41A;&#x43B;&#x430;&#x441;&#x441;&#x44B; &#x440;&#x435;&#x434;&#x43A;&#x43E;&#x441;&#x442;&#x438;" data-ua="&#x41A;&#x43B;&#x430;&#x441;&#x438; &#x440;&#x456;&#x434;&#x43A;&#x456;&#x441;&#x43D;&#x43E;&#x441;&#x442;&#x456;">Rarity Classes</span>
+    <h2 class="display-title reveal" data-en="4 CLASSES.<br>1200 NFTs.<br><span>RANDOM MINT.</span>" data-ru="4 &#x41A;&#x41B;&#x410;&#x421;&#x421;&#x410;.<br>1200 NFT.<br><span>&#x420;&#x410;&#x41D;&#x414;&#x41E;&#x41C;&#x41D;&#x42B;&#x419; &#x41C;&#x418;&#x41D;&#x422;.</span>" data-ua="4 &#x41A;&#x41B;&#x410;&#x421;&#x418;.<br>1200 NFT.<br><span>&#x420;&#x410;&#x41D;&#x414;&#x41E;&#x41C;&#x41D;&#x418;&#x419; &#x41C;&#x406;&#x41D;&#x422;.</span>">4 CLASSES.<br>1200 NFTs.<br><span>RANDOM MINT.</span></h2>
+    <div class="nft-classes reveal">
+      <div class="nft-class legendary">
+        <span class="badge" data-en="LEGENDARY" data-ru="&#x41B;&#x415;&#x413;&#x415;&#x41D;&#x414;&#x410;&#x420;&#x41D;&#x42B;&#x419;" data-ua="&#x41B;&#x415;&#x413;&#x415;&#x41D;&#x414;&#x410;&#x420;&#x41D;&#x418;&#x419;">LEGENDARY</span>
+        <span class="count">20</span>
+        <span class="count-label" data-en="NFTs" data-ru="&#x428;&#x442;." data-ua="&#x428;&#x442;.">NFTs</span>
+        <span class="drop" data-en="&#x25CF; $1000 SOL drop at 100% mint" data-ru="&#x25CF; $1000 SOL &#x434;&#x440;&#x43E;&#x43F; &#x43F;&#x440;&#x438; 100% &#x43C;&#x438;&#x43D;&#x442;&#x435;" data-ua="&#x25CF; $1000 SOL &#x434;&#x440;&#x43E;&#x43F; &#x43F;&#x440;&#x438; 100% &#x43C;&#x456;&#x43D;&#x442;&#x456;">&#x25CF; $1000 SOL drop at 100% mint</span>
+      </div>
+      <div class="nft-class epic">
+        <span class="badge" data-en="EPIC" data-ru="&#x42D;&#x41F;&#x418;&#x427;&#x415;&#x421;&#x41A;&#x418;&#x419;" data-ua="&#x415;&#x41F;&#x406;&#x427;&#x41D;&#x418;&#x419;">EPIC</span>
+        <span class="count">160</span>
+        <span class="count-label">NFTs</span>
+        <span class="drop" data-en="&#x25CF; $1000 SOL drop at 100% mint" data-ru="&#x25CF; $1000 SOL &#x434;&#x440;&#x43E;&#x43F; &#x43F;&#x440;&#x438; 100% &#x43C;&#x438;&#x43D;&#x442;&#x435;" data-ua="&#x25CF; $1000 SOL &#x434;&#x440;&#x43E;&#x43F; &#x43F;&#x440;&#x438; 100% &#x43C;&#x456;&#x43D;&#x442;&#x456;">&#x25CF; $1000 SOL drop at 100% mint</span>
+      </div>
+      <div class="nft-class rare">
+        <span class="badge" data-en="RARE" data-ru="&#x420;&#x415;&#x414;&#x41A;&#x418;&#x419;" data-ua="&#x420;&#x406;&#x414;&#x41A;&#x406;&#x421;&#x41D;&#x418;&#x419;">RARE</span>
+        <span class="count">320</span>
+        <span class="count-label">NFTs</span>
+        <span class="drop" data-en="&#x25CF; $1000 SOL drop at 100% mint" data-ru="&#x25CF; $1000 SOL &#x434;&#x440;&#x43E;&#x43F; &#x43F;&#x440;&#x438; 100% &#x43C;&#x438;&#x43D;&#x442;&#x435;" data-ua="&#x25CF; $1000 SOL &#x434;&#x440;&#x43E;&#x43F; &#x43F;&#x440;&#x438; 100% &#x43C;&#x456;&#x43D;&#x442;&#x456;">&#x25CF; $1000 SOL drop at 100% mint</span>
+      </div>
+      <div class="nft-class common">
+        <span class="badge" data-en="COMMON" data-ru="&#x41E;&#x411;&#x42B;&#x427;&#x41D;&#x42B;&#x419;" data-ua="&#x417;&#x412;&#x418;&#x427;&#x410;&#x419;&#x41D;&#x418;&#x419;">COMMON</span>
+        <span class="count">700</span>
+        <span class="count-label">NFTs</span>
+        <span class="drop" data-en="&#x25CF; $1000 SOL drop at 100% mint" data-ru="&#x25CF; $1000 SOL &#x434;&#x440;&#x43E;&#x43F; &#x43F;&#x440;&#x438; 100% &#x43C;&#x438;&#x43D;&#x442;&#x435;" data-ua="&#x25CF; $1000 SOL &#x434;&#x440;&#x43E;&#x43F; &#x43F;&#x440;&#x438; 100% &#x43C;&#x456;&#x43D;&#x442;&#x456;">&#x25CF; $1000 SOL drop at 100% mint</span>
+      </div>
+    </div>
+    <p style="font-family:monospace;font-size:11px;color:#555;margin-top:12px;letter-spacing:1px;" class="reveal" data-en="Each class receives $1000 in SOL when fully minted. The mint is random &#x2014; you don't choose your class." data-ru="&#x41A;&#x430;&#x436;&#x434;&#x44B;&#x439; &#x43A;&#x43B;&#x430;&#x441;&#x441; &#x43F;&#x43E;&#x43B;&#x443;&#x447;&#x430;&#x435;&#x442; $1000 &#x432; SOL &#x43F;&#x440;&#x438; &#x43F;&#x43E;&#x43B;&#x43D;&#x43E;&#x43C; &#x43C;&#x438;&#x43D;&#x442;&#x435;. &#x41C;&#x438;&#x43D;&#x442; &#x440;&#x430;&#x43D;&#x434;&#x43E;&#x43C;&#x43D;&#x44B;&#x439; &#x2014; &#x43A;&#x43B;&#x430;&#x441;&#x441; &#x432;&#x44B;&#x43F;&#x430;&#x434;&#x430;&#x435;&#x442; &#x441;&#x43B;&#x443;&#x447;&#x430;&#x439;&#x43D;&#x43E;." data-ua="&#x41A;&#x43E;&#x436;&#x43D;&#x438;&#x439; &#x43A;&#x43B;&#x430;&#x441; &#x43E;&#x442;&#x440;&#x438;&#x43C;&#x443;&#x454; $1000 &#x443; SOL &#x43F;&#x440;&#x438; &#x43F;&#x43E;&#x432;&#x43D;&#x43E;&#x43C;&#x443; &#x43C;&#x456;&#x43D;&#x442;&#x456;. &#x41C;&#x456;&#x43D;&#x442; &#x432;&#x438;&#x43F;&#x430;&#x434;&#x43A;&#x43E;&#x432;&#x438;&#x439; &#x2014; &#x43A;&#x43B;&#x430;&#x441; &#x432;&#x438;&#x43F;&#x430;&#x434;&#x430;&#x454; &#x432;&#x438;&#x43F;&#x430;&#x434;&#x43A;&#x43E;&#x432;&#x43E;.">Each class receives $1000 in SOL when fully minted. The mint is random &#x2014; you don't choose your class.</p>
+  </div>
+</div>
+
+<div class="section-alt">
+  <div class="container">
+    <span class="label reveal" data-en="How it works" data-ru="&#x41A;&#x430;&#x43A; &#x440;&#x430;&#x431;&#x43E;&#x442;&#x430;&#x435;&#x442;" data-ua="&#x42F;&#x43A; &#x446;&#x435; &#x43F;&#x440;&#x430;&#x446;&#x44E;&#x454;">How it works</span>
+    <h2 class="display-title reveal" data-en="MINT FOR SOL.<br><span>SELL FOR TACO.</span>" data-ru="&#x41C;&#x418;&#x41D;&#x422; &#x417;&#x410; SOL.<br><span>&#x41F;&#x420;&#x41E;&#x414;&#x410;&#x416;&#x410; &#x417;&#x410; TACO.</span>" data-ua="&#x41C;&#x406;&#x41D;&#x422; &#x417;&#x410; SOL.<br><span>&#x41F;&#x420;&#x41E;&#x414;&#x410;&#x416; &#x417;&#x410; TACO.</span>">MINT FOR SOL.<br><span>SELL FOR TACO.</span></h2>
+    <div class="mint-flow reveal" style="margin-top:44px;">
+      <div class="mint-cell">
+        <h3 data-en="MINT PHASE" data-ru="&#x424;&#x410;&#x417;&#x410; &#x41C;&#x418;&#x41D;&#x422;&#x410;" data-ua="&#x424;&#x410;&#x417;&#x410; &#x41C;&#x406;&#x41D;&#x422;&#x423;">MINT PHASE</h3>
+        <p data-en="Pay in SOL &#x2014; receive a random NFT from one of 4 classes. SOL collected is split 4 ways: <strong>rewards, buyback, marketing, product development</strong> (25% each)." data-ru="&#x41F;&#x43B;&#x430;&#x442;&#x438;&#x448;&#x44C; SOL &#x2014; &#x43F;&#x43E;&#x43B;&#x443;&#x447;&#x430;&#x435;&#x448;&#x44C; &#x441;&#x43B;&#x443;&#x447;&#x430;&#x439;&#x43D;&#x44B;&#x439; NFT. &#x421;&#x43E;&#x431;&#x440;&#x430;&#x43D;&#x43D;&#x44B;&#x439; SOL &#x434;&#x435;&#x43B;&#x438;&#x442;&#x441;&#x44F; &#x43D;&#x430; 4 &#x447;&#x430;&#x441;&#x442;&#x438; &#x43F;&#x43E; 25%." data-ua="&#x41F;&#x43B;&#x430;&#x442;&#x438;&#x448; SOL &#x2014; &#x43E;&#x442;&#x440;&#x438;&#x43C;&#x443;&#x454;&#x448; &#x432;&#x438;&#x43F;&#x430;&#x434;&#x43A;&#x43E;&#x432;&#x438;&#x439; NFT. &#x417;&#x456;&#x431;&#x440;&#x430;&#x43D;&#x438;&#x439; SOL &#x434;&#x456;&#x43B;&#x438;&#x442;&#x44C;&#x441;&#x44F; &#x43D;&#x430; 4 &#x447;&#x430;&#x441;&#x442;&#x438;&#x43D;&#x438; &#x43F;&#x43E; 25%.">Pay in SOL &#x2014; receive a random NFT from one of 4 classes. SOL collected is split 4 ways: <strong>rewards, buyback, marketing, product development</strong> (25% each).</p>
+      </div>
+      <div class="mint-cell">
+        <h3 data-en="TRADING PHASE" data-ru="&#x424;&#x410;&#x417;&#x410; &#x422;&#x41E;&#x420;&#x413;&#x41E;&#x412;&#x41B;&#x418;" data-ua="&#x424;&#x410;&#x417;&#x410; &#x422;&#x41E;&#x420;&#x413;&#x406;&#x412;&#x41B;&#x406;">TRADING PHASE</h3>
+        <p data-en="After mint, NFTs are traded for <strong>TACO tokens</strong> on the Telegram marketplace. This creates real demand for TACO &#x2014; increasing volume and staking rewards for everyone." data-ru="&#x41F;&#x43E;&#x441;&#x43B;&#x435; &#x43C;&#x438;&#x43D;&#x442;&#x430; NFT &#x43F;&#x440;&#x43E;&#x434;&#x430;&#x44E;&#x442;&#x441;&#x44F; &#x437;&#x430; <strong>TACO</strong> &#x43D;&#x430; &#x43C;&#x430;&#x440;&#x43A;&#x435;&#x442;&#x43F;&#x43B;&#x435;&#x439;&#x441;&#x435; Telegram. &#x42D;&#x442;&#x43E; &#x441;&#x43E;&#x437;&#x434;&#x430;&#x451;&#x442; &#x440;&#x435;&#x430;&#x43B;&#x44C;&#x43D;&#x44B;&#x439; &#x441;&#x43F;&#x440;&#x43E;&#x441;." data-ua="&#x41F;&#x456;&#x441;&#x43B;&#x44F; &#x43C;&#x456;&#x43D;&#x442;&#x443; NFT &#x43F;&#x440;&#x43E;&#x434;&#x430;&#x44E;&#x442;&#x44C;&#x441;&#x44F; &#x437;&#x430; <strong>TACO</strong> &#x43D;&#x430; &#x43C;&#x430;&#x440;&#x43A;&#x435;&#x442;&#x43F;&#x43B;&#x435;&#x439;&#x441;&#x456; Telegram.">After mint, NFTs are traded for <strong>TACO tokens</strong> on the Telegram marketplace. This creates real demand for TACO &#x2014; increasing volume and staking rewards for everyone.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="wallet-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9000;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+  <div class="wm-box">
+    <button class="wm-close" id="wm-close">&#x2715;</button>
+    <div class="wm-title">CONNECT</div>
+    <div class="wm-sub" data-en="Choose your Solana wallet" data-ru="&#x412;&#x44B;&#x431;&#x435;&#x440;&#x438; Solana &#x43A;&#x43E;&#x448;&#x435;&#x43B;&#x451;&#x43A;" data-ua="&#x41E;&#x431;&#x435;&#x440;&#x456;&#x442;&#x44C; Solana &#x433;&#x430;&#x43C;&#x430;&#x43D;&#x435;&#x446;&#x44C;">Choose your Solana wallet</div>
+    <button class="wm-opt" id="connect-phantom"><span class="wm-opt-icon">&#x1F47B;</span><div><span class="wm-opt-name">Phantom</span><span class="wm-opt-desc">Most popular Solana wallet</span></div></button>
+    <button class="wm-opt" id="connect-solflare"><span class="wm-opt-icon">&#x1F525;</span><div><span class="wm-opt-name">Solflare</span><span class="wm-opt-desc">Native Solana wallet</span></div></button>
+  </div>
+</div>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div><span class="footer-logo">MS</span><p class="footer-note" id="footer-copy">&#x00A9; 2026 Miracle Shaker &#xB7; Poland, Gda&#x0144;sk</p></div>
+      <nav class="footer-nav-col" style="position:static;background:none;border:none;backdrop-filter:none;height:auto;">
+        <a href="index.html" data-en="Home" data-ru="&#x413;&#x43B;&#x430;&#x432;&#x43D;&#x430;&#x44F;" data-ua="&#x413;&#x43E;&#x43B;&#x43E;&#x432;&#x43D;&#x430;">Home</a>
+        <a href="shaker.html">Shaker</a><a href="nft-tales.html">NFT Tales</a>
+        <a href="game.html" data-en="Game" data-ru="&#x418;&#x433;&#x440;&#x430;" data-ua="&#x413;&#x440;&#x430;">Game</a><a href="faq.html">FAQ</a>
+      </nav>
+      <div class="footer-socials">
+        <a href="https://x.com/MiracleShaker" class="footer-social-link" target="_blank">X / Twitter</a>
+        <a href="https://t.me/+Bcx42tPC-DE1NTRk" class="footer-social-link" target="_blank">Telegram</a>
+        <a href="https://app.printr.money/trade/3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr" class="footer-social-link" target="_blank">Printr</a>
+        <a href="https://dexscreener.com/solana/3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr" class="footer-social-link" target="_blank">DexScreener</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p id="footer-rights">All rights reserved.</p>
+      <p style="font-family:monospace;font-size:10px;color:#555;">$TACO &#xB7; Viacheslav Markelov &#xB7; CEO</p>
+    </div>
+  </div>
+</footer>
+<script src="script.js"></script>
+</body>
+</html>

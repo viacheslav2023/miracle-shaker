@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shaker — Retro 1.0 & POB Staking · Miracle Shaker</title>
+  <meta name="description" content="POB Staking mechanics on Solana. Hold TACO, earn from every trade.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+.pob-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px; background:#1e1e1e; }
+.pob-cell { background:#111; padding:28px; }
+.pob-cell h3 { font-family:"Bebas Neue",Impact,sans-serif; font-size:22px; letter-spacing:1px; margin-bottom:10px; }
+.pob-cell p { font-size:14px; color:#888; font-weight:300; line-height:1.7; }
+.fee-bar { display:grid; grid-template-columns:1fr 1fr; gap:2px; background:#1e1e1e; margin-top:2px; }
+.fee-item { background:#111; padding:20px; text-align:center; }
+.fee-val { font-family:monospace; font-size:28px; color:#ff6b1a; display:block; }
+.fee-label { font-family:monospace; font-size:10px; color:#555; letter-spacing:1px; margin-top:4px; display:block; }
+@media(max-width:900px){ .pob-grid,.fee-bar{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<nav id="main-nav" style="position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(8,8,8,0.96);backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-bottom-color 0.3s;box-sizing:border-box;">
+  <div style="max-width:1200px;margin:0 auto;padding:0 24px;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;">
+    <a href="index.html" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:19px;letter-spacing:4px;color:#ff6b1a;text-decoration:none;flex-shrink:0;">MIRACLE SHAKER</a>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <div style="display:flex;gap:2px;background:#1e1e1e;padding:2px;">
+        <button class="lang-btn" data-lang="en" style="font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:none;color:#555;padding:5px 8px;cursor:pointer;">EN</button>
+        <button class="lang-btn" data-lang="ru" style="font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:none;color:#555;padding:5px 8px;cursor:pointer;">RU</button>
+        <button class="lang-btn" data-lang="ua" style="font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:none;color:#555;padding:5px 8px;cursor:pointer;">UA</button>
+      </div>
+      <button id="wallet-btn" style="font-family:monospace;font-size:9px;letter-spacing:1px;color:#888;background:none;border:1px solid #2a2a2a;padding:7px 12px;cursor:pointer;white-space:nowrap;">WALLET</button>
+      <a href="https://app.printr.money/trade/3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr" id="nav-buy" target="_blank" style="font-family:monospace;font-size:9px;letter-spacing:1px;color:#080808;background:#ff6b1a;padding:7px 12px;text-decoration:none;font-weight:700;white-space:nowrap;">BUY TACO</a>
+      <button id="nav-burger" style="background:none;border:1px solid #2a2a2a;padding:8px 9px;cursor:pointer;display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+        <span style="display:block;width:17px;height:1px;background:#f0ece4;"></span>
+        <span style="display:block;width:17px;height:1px;background:#f0ece4;"></span>
+        <span style="display:block;width:17px;height:1px;background:#f0ece4;"></span>
+      </button>
+    </div>
+  </div>
+</nav>
+<div id="nav-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:498;"></div>
+<div id="slide-menu" style="position:fixed;top:0;right:0;width:260px;height:100vh;background:#0d0d0d;border-left:1px solid #1e1e1e;z-index:499;transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;padding:20px 24px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
+    <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:3px;color:#ff6b1a;">MENU</span>
+    <button id="menu-close" style="background:none;border:1px solid #2a2a2a;color:#888;width:30px;height:30px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">&#x2715;</button>
+  </div>
+  <a href="index.html" id="nav-home" style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#888;text-decoration:none;padding:13px 0;border-bottom:1px solid #1e1e1e;display:block;">HOME</a>
+  <a href="shaker.html" id="nav-shaker" style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#888;text-decoration:none;padding:13px 0;border-bottom:1px solid #1e1e1e;display:block;">SHAKER</a>
+  <a href="nft-tales.html" id="nav-nft" style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#888;text-decoration:none;padding:13px 0;border-bottom:1px solid #1e1e1e;display:block;">NFT TALES</a>
+  <a href="game.html" id="nav-game" style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#888;text-decoration:none;padding:13px 0;border-bottom:1px solid #1e1e1e;display:block;">GAME</a>
+  <a href="faq.html" id="nav-faq" style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#888;text-decoration:none;padding:13px 0;display:block;">FAQ</a>
+  <div style="margin-top:auto;padding-top:20px;border-top:1px solid #1e1e1e;display:flex;flex-direction:column;gap:8px;">
+    <a href="https://app.printr.money/trade/3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr" target="_blank" style="font-family:monospace;font-size:10px;letter-spacing:1px;background:#ff6b1a;color:#080808;padding:11px;text-decoration:none;font-weight:700;display:block;text-align:center;">BUY TACO</a>
+    <a href="https://t.me/+Bcx42tPC-DE1NTRk" target="_blank" style="font-family:monospace;font-size:10px;letter-spacing:1px;border:1px solid #2a2a2a;color:#888;padding:10px;text-decoration:none;display:block;text-align:center;">TELEGRAM</a>
+  </div>
+</div>
+
+<div class="page-hero">
+  <div class="page-hero-bg"></div>
+  <div class="hero-grid-bg"></div>
+  <div style="position:relative;z-index:1;">
+    <span class="label" data-en="Mechanism" data-ru="&#x41C;&#x435;&#x445;&#x430;&#x43D;&#x438;&#x437;&#x43C;" data-ua="&#x41C;&#x435;&#x445;&#x430;&#x43D;&#x456;&#x437;&#x43C;">Mechanism</span>
+    <h1 class="display-title" data-en="RETRO 1.0<br><span>POB STAKING</span>" data-ru="RETRO 1.0<br><span>POB &#x421;&#x422;&#x415;&#x419;&#x41A;&#x418;&#x41D;&#x413;</span>" data-ua="RETRO 1.0<br><span>POB &#x421;&#x422;&#x415;&#x419;&#x41A;&#x406;&#x41D;&#x413;</span>">RETRO 1.0<br><span>POB STAKING</span></h1>
+    <p class="body-lead" style="margin-top:16px;max-width:560px;" data-en="A mechanism that takes you back to the era when early crypto participants earned real rewards. Faith staking &#x2014; hold TACO, earn from every operation." data-ru="&#x41C;&#x435;&#x445;&#x430;&#x43D;&#x438;&#x437;&#x43C;, &#x43A;&#x43E;&#x442;&#x43E;&#x440;&#x44B;&#x439; &#x432;&#x43E;&#x437;&#x432;&#x440;&#x430;&#x449;&#x430;&#x435;&#x442; &#x432;&#x430;&#x441; &#x432; &#x44D;&#x43F;&#x43E;&#x445;&#x443;, &#x43A;&#x43E;&#x433;&#x434;&#x430; &#x440;&#x430;&#x43D;&#x43D;&#x438;&#x435; &#x443;&#x447;&#x430;&#x441;&#x442;&#x43D;&#x438;&#x43A;&#x438; &#x43A;&#x440;&#x438;&#x43F;&#x442;&#x43E; &#x43F;&#x43E;&#x43B;&#x443;&#x447;&#x430;&#x43B;&#x438; &#x440;&#x435;&#x430;&#x43B;&#x44C;&#x43D;&#x44B;&#x435; &#x432;&#x43E;&#x437;&#x43D;&#x430;&#x433;&#x440;&#x430;&#x436;&#x434;&#x435;&#x43D;&#x438;&#x44F;." data-ua="&#x41C;&#x435;&#x445;&#x430;&#x43D;&#x456;&#x437;&#x43C;, &#x44F;&#x43A;&#x438;&#x439; &#x43F;&#x43E;&#x432;&#x435;&#x440;&#x442;&#x430;&#x454; &#x432;&#x430;&#x441; &#x432; &#x435;&#x43F;&#x43E;&#x445;&#x443;, &#x43A;&#x43E;&#x43B;&#x438; &#x440;&#x430;&#x43D;&#x43D;&#x456; &#x443;&#x447;&#x430;&#x441;&#x43D;&#x438;&#x43A;&#x438; &#x43A;&#x440;&#x438;&#x43F;&#x442;&#x43E; &#x43E;&#x442;&#x440;&#x438;&#x43C;&#x443;&#x432;&#x430;&#x43B;&#x438; &#x440;&#x435;&#x430;&#x43B;&#x44C;&#x43D;&#x456; &#x43D;&#x430;&#x433;&#x43E;&#x440;&#x43E;&#x434;&#x438;.">A mechanism that takes you back to the era when early crypto participants earned real rewards. Faith staking &#x2014; hold TACO, earn from every operation.</p>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container">
+    <span class="label reveal" data-en="How it works" data-ru="&#x41A;&#x430;&#x43A; &#x440;&#x430;&#x431;&#x43E;&#x442;&#x430;&#x435;&#x442;" data-ua="&#x42F;&#x43A; &#x446;&#x435; &#x43F;&#x440;&#x430;&#x446;&#x44E;&#x454;">How it works</span>
+    <h2 class="display-title reveal" data-en="POB STAKING<br>MECHANICS" data-ru="&#x41C;&#x415;&#x425;&#x410;&#x41D;&#x418;&#x41A;&#x410;<br>POB &#x421;&#x422;&#x415;&#x419;&#x41A;&#x418;&#x41D;&#x413;&#x410;" data-ua="&#x41C;&#x415;&#x425;&#x410;&#x41D;&#x406;&#x41A;&#x410;<br>POB &#x421;&#x422;&#x415;&#x419;&#x41A;&#x406;&#x41D;&#x413;&#x423;">POB STAKING<br>MECHANICS</h2>
+    <div class="flow reveal" style="margin-top:44px;">
+      <div class="flow-row">
+        <div class="flow-label"><div class="step-no">STEP 01</div><strong data-en="BUY" data-ru="&#x41A;&#x423;&#x41F;&#x418;" data-ua="&#x41A;&#x423;&#x41F;&#x418;">BUY</strong></div>
+        <div class="flow-content" data-en="Buy $TACO on <strong>Printr</strong> platform. Available on Solana network &#x2014; fast, cheap, simple." data-ru="&#x41A;&#x443;&#x43F;&#x438; $TACO &#x43D;&#x430; &#x43F;&#x43B;&#x430;&#x442;&#x444;&#x43E;&#x440;&#x43C;&#x435; <strong>Printr</strong>. &#x414;&#x43E;&#x441;&#x442;&#x443;&#x43F;&#x43D;&#x43E; &#x432; &#x441;&#x435;&#x442;&#x438; Solana." data-ua="&#x41A;&#x443;&#x43F;&#x438; $TACO &#x43D;&#x430; &#x43F;&#x43B;&#x430;&#x442;&#x444;&#x43E;&#x440;&#x43C;&#x456; <strong>Printr</strong>. &#x414;&#x43E;&#x441;&#x442;&#x443;&#x43F;&#x43D;&#x43E; &#x432; &#x43C;&#x435;&#x440;&#x435;&#x436;&#x456; Solana.">Buy $TACO on <strong>Printr</strong> platform. Available on Solana network &#x2014; fast, cheap, simple.</div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-label"><div class="step-no">STEP 02</div><strong data-en="STAKE" data-ru="&#x421;&#x422;&#x415;&#x419;&#x41A;" data-ua="&#x421;&#x422;&#x415;&#x419;&#x41A;">STAKE</strong></div>
+        <div class="flow-content" data-en="Lock TACO in <strong>faith staking</strong>. The longer the lock &#x2014; the higher your share of the fee pool." data-ru="&#x417;&#x430;&#x43B;&#x43E;&#x447;&#x438; TACO &#x432; <strong>&#x441;&#x442;&#x435;&#x439;&#x43A;&#x438;&#x43D;&#x433; &#x432;&#x435;&#x440;&#x44B;</strong>. &#x427;&#x435;&#x43C; &#x434;&#x43B;&#x438;&#x43D;&#x43D;&#x435;&#x435; &#x43B;&#x43E;&#x43A; &#x2014; &#x442;&#x435;&#x43C; &#x431;&#x43E;&#x43B;&#x44C;&#x448;&#x435; &#x432;&#x430;&#x448;&#x430; &#x434;&#x43E;&#x43B;&#x44F;." data-ua="&#x417;&#x430;&#x43B;&#x43E;&#x447;&#x438; TACO &#x432; <strong>&#x441;&#x442;&#x435;&#x439;&#x43A;&#x456;&#x43D;&#x433; &#x432;&#x456;&#x440;&#x438;</strong>. &#x427;&#x438;&#x43C; &#x434;&#x43E;&#x432;&#x448;&#x438;&#x439; &#x43B;&#x43E;&#x43A; &#x2014; &#x442;&#x438;&#x43C; &#x431;&#x456;&#x43B;&#x44C;&#x448;&#x430; &#x442;&#x432;&#x43E;&#x44F; &#x447;&#x430;&#x441;&#x442;&#x43A;&#x430;.">Lock TACO in <strong>faith staking</strong>. The longer the lock &#x2014; the higher your share of the fee pool.</div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-label"><div class="step-no">STEP 03</div><strong data-en="EARN" data-ru="&#x417;&#x410;&#x420;&#x410;&#x411;&#x410;&#x422;&#x42B;&#x412;&#x410;&#x419;" data-ua="&#x417;&#x410;&#x420;&#x41E;&#x411;&#x41B;&#x42F;&#x419;">EARN</strong></div>
+        <div class="flow-content" data-en="Every buy &amp; sell generates <strong>1.11% fee (pre-lock)</strong> or <strong>0.61% (post-lock)</strong>. Fees distributed automatically to all stakers." data-ru="&#x41A;&#x430;&#x436;&#x434;&#x430;&#x44F; &#x43F;&#x43E;&#x43A;&#x443;&#x43F;&#x43A;&#x430; &amp; &#x43F;&#x440;&#x43E;&#x434;&#x430;&#x436;&#x430; &#x433;&#x435;&#x43D;&#x435;&#x440;&#x438;&#x440;&#x443;&#x435;&#x442; <strong>&#x43A;&#x43E;&#x43C;&#x438;&#x441;&#x441;&#x438;&#x44E; 1.11%</strong>. &#x420;&#x430;&#x441;&#x43F;&#x440;&#x435;&#x434;&#x435;&#x43B;&#x44F;&#x435;&#x442;&#x441;&#x44F; &#x430;&#x432;&#x442;&#x43E;&#x43C;&#x430;&#x442;&#x438;&#x447;&#x435;&#x441;&#x43A;&#x438;." data-ua="&#x41A;&#x43E;&#x436;&#x43D;&#x430; &#x43F;&#x43E;&#x43A;&#x443;&#x43F;&#x43A;&#x430; &amp; &#x43F;&#x440;&#x43E;&#x434;&#x430;&#x436; &#x433;&#x435;&#x43D;&#x435;&#x440;&#x443;&#x454; <strong>&#x43A;&#x43E;&#x43C;&#x456;&#x441;&#x456;&#x44E; 1.11%</strong>. &#x420;&#x43E;&#x437;&#x43F;&#x43E;&#x434;&#x456;&#x43B;&#x44F;&#x454;&#x442;&#x44C;&#x441;&#x44F; &#x430;&#x432;&#x442;&#x43E;&#x43C;&#x430;&#x442;&#x438;&#x447;&#x43D;&#x43E;.">Every buy &amp; sell generates <strong>1.11% fee (pre-lock)</strong> or <strong>0.61% (post-lock)</strong>. Fees distributed automatically to all stakers.</div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-label"><div class="step-no">STEP 04</div><strong data-en="GROW" data-ru="&#x420;&#x410;&#x421;&#x422;&#x418;" data-ua="&#x420;&#x41E;&#x421;&#x422;&#x418;">GROW</strong></div>
+        <div class="flow-content" data-en="As <strong>NFT Tales</strong> launches and the <strong>Labyrinth game</strong> grows, TACO volume increases &#x2014; and so do your earnings." data-ru="&#x421; &#x437;&#x430;&#x43F;&#x443;&#x441;&#x43A;&#x43E;&#x43C; <strong>NFT Tales</strong> &#x438; &#x440;&#x43E;&#x441;&#x442;&#x43E;&#x43C; &#x438;&#x433;&#x440;&#x44B; <strong>Labyrinth</strong> &#x43E;&#x431;&#x44A;&#x451;&#x43C; TACO &#x440;&#x430;&#x441;&#x442;&#x451;&#x442; &#x2014; &#x430; &#x432;&#x43C;&#x435;&#x441;&#x442;&#x435; &#x441; &#x43D;&#x438;&#x43C; &#x438; &#x432;&#x430;&#x448;&#x438; &#x434;&#x43E;&#x445;&#x43E;&#x434;&#x44B;." data-ua="&#x417; &#x437;&#x430;&#x43F;&#x443;&#x441;&#x43A;&#x43E;&#x43C; <strong>NFT Tales</strong> &#x456; &#x437;&#x440;&#x43E;&#x441;&#x442;&#x430;&#x43D;&#x43D;&#x44F;&#x43C; &#x433;&#x440;&#x438; <strong>Labyrinth</strong> &#x43E;&#x431;&#x441;&#x44F;&#x433; TACO &#x437;&#x440;&#x43E;&#x441;&#x442;&#x430;&#x454; &#x2014; &#x430; &#x440;&#x430;&#x437;&#x43E;&#x43C; &#x437; &#x43D;&#x438;&#x43C; &#x456; &#x432;&#x430;&#x448;&#x456; &#x434;&#x43E;&#x445;&#x43E;&#x434;&#x438;.">As <strong>NFT Tales</strong> launches and the <strong>Labyrinth game</strong> grows, TACO volume increases &#x2014; and so do your earnings.</div>
+      </div>
+    </div>
+    <div class="fee-bar reveal">
+      <div class="fee-item"><span class="fee-val">1.11%</span><span class="fee-label" data-en="Pre-lock staking fee" data-ru="&#x41A;&#x43E;&#x43C;&#x438;&#x441;&#x441;&#x438;&#x44F; &#x434;&#x43E; &#x43B;&#x43E;&#x43A;&#x430;" data-ua="&#x41A;&#x43E;&#x43C;&#x456;&#x441;&#x456;&#x44F; &#x434;&#x43E; &#x43B;&#x43E;&#x43A;&#x443;">Pre-lock staking fee</span></div>
+      <div class="fee-item"><span class="fee-val">0.61%</span><span class="fee-label" data-en="Post-lock staking fee" data-ru="&#x41A;&#x43E;&#x43C;&#x438;&#x441;&#x441;&#x438;&#x44F; &#x43F;&#x43E;&#x441;&#x43B;&#x435; &#x43B;&#x43E;&#x43A;&#x430;" data-ua="&#x41A;&#x43E;&#x43C;&#x456;&#x441;&#x456;&#x44F; &#x43F;&#x456;&#x441;&#x43B;&#x44F; &#x43B;&#x43E;&#x43A;&#x443;">Post-lock staking fee</span></div>
+    </div>
+    <div style="margin-top:48px;" class="reveal">
+      <a href="https://app.printr.money/trade/3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr" class="btn btn-primary" target="_blank" data-en="Start Staking on Printr" data-ru="&#x41D;&#x430;&#x447;&#x430;&#x442;&#x44C; &#x441;&#x442;&#x435;&#x439;&#x43A;&#x438;&#x43D;&#x433; &#x43D;&#x430; Printr" data-ua="&#x41F;&#x43E;&#x447;&#x430;&#x442;&#x438; &#x441;&#x442;&#x435;&#x439;&#x43A;&#x456;&#x43D;&#x433; &#x43D;&#x430; Printr">Start Staking on Printr</a>
+    </div>
+  </div>
+</div>
+
+<div id="wallet-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9000;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+  <div class="wm-box">
+    <button class="wm-close" id="wm-close">&#x2715;</button>
+    <div class="wm-title">CONNECT</div>
+    <div class="wm-sub" data-en="Choose your Solana wallet" data-ru="&#x412;&#x44B;&#x431;&#x435;&#x440;&#x438; Solana &#x43A;&#x43E;&#x448;&#x435;&#x43B;&#x451;&#x43A;" data-ua="&#x41E;&#x431;&#x435;&#x440;&#x456;&#x442;&#x44C; Solana &#x433;&#x430;&#x43C;&#x430;&#x43D;&#x435;&#x446;&#x44C;">Choose your Solana wallet</div>
+    <button class="wm-opt" id="connect-phantom"><span class="wm-opt-icon">&#x1F47B;</span><div><span class="wm-opt-name">Phantom</span><span class="wm-opt-desc">Most popular Solana wallet</span></div></button>
+    <button class="wm-opt" id="connect-solflare"><span class="wm-opt-icon">&#x1F525;</span><div><span class="wm-opt-name">Solflare</span><span class="wm-opt-desc">Native Solana wallet</span></div></button>
+  </div>
+</div>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div><span class="footer-logo">MS</span><p class="footer-note" id="footer-copy">&#x00A9; 2026 Miracle Shaker &#xB7; Poland, Gda&#x0144;sk</p></div>
+      <nav class="footer-nav-col" style="position:static;background:none;border:none;backdrop-filter:none;height:auto;">
+        <a href="index.html" data-en="Home" data-ru="&#x413;&#x43B;&#x430;&#x432;&#x43D;&#x430;&#x44F;" data-ua="&#x413;&#x43E;&#x43B;&#x43E;&#x432;&#x43D;&#x430;">Home</a>
+        <a href="shaker.html">Shaker</a><a href="nft-tales.html">NFT Tales</a>
+        <a href="game.html" data-en="Game" data-ru="&#x418;&#x433;&#x440;&#x430;" data-ua="&#x413;&#x440;&#x430;">Game</a><a href="faq.html">FAQ</a>
+      </nav>
+      <div class="footer-socials">
+        <a href="https://x.com/MiracleShaker" class="footer-social-link" target="_blank">X / Twitter</a>
+        <a href="https://t.me/+Bcx42tPC-DE1NTRk" class="footer-social-link" target="_blank">Telegram</a>
+        <a href="https://app.printr.money/trade/3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr" class="footer-social-link" target="_blank">Printr</a>
+        <a href="https://dexscreener.com/solana/3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr" class="footer-social-link" target="_blank">DexScreener</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p id="footer-rights">All rights reserved.</p>
+      <p style="font-family:monospace;font-size:10px;color:#555;">$TACO &#xB7; Viacheslav Markelov &#xB7; CEO</p>
+    </div>
+  </div>
+</footer>
+<script src="script.js"></script>
+</body>
+</html>
