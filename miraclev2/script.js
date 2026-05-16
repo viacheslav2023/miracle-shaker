@@ -120,6 +120,13 @@ async function rpc(method, params) {
 
 async function getSolBalance(pk) {
   try {
+    if (walletProvider && walletProvider.publicKey) {
+      var conn = new window.solanaWeb3.Connection('https://rpc.ankr.com/solana');
+      var bal = await conn.getBalance(walletProvider.publicKey);
+      return bal / 1e9;
+    }
+  } catch(e) {}
+  try {
     var r = await rpc('getBalance', [pk, {commitment:'confirmed'}]);
     return ((r && r.value) || 0) / 1e9;
   } catch(e) { return 0; }
