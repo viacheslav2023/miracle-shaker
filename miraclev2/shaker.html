@@ -18,8 +18,48 @@
 .fee-item { background:#111; padding:20px; text-align:center; }
 .fee-val { font-family:monospace; font-size:28px; color:#ff6b1a; display:block; }
 .fee-label { font-family:monospace; font-size:10px; color:#555; letter-spacing:1px; margin-top:4px; display:block; }
-@media(max-width:900px){ .pob-grid,.fee-bar{ grid-template-columns:1fr; } }
-</style>
+
+/* FLOW FIX */
+.flow-row {
+  display:grid;
+  grid-template-columns:180px 1fr;
+  gap:2px;
+  background:#1e1e1e;
+  margin-bottom:2px;
+}
+.flow-label {
+  background:#111;
+  padding:24px 20px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.flow-content {
+  background:#111;
+  padding:24px 28px;
+  font-size:14px;
+  color:#888;
+  font-weight:300;
+  line-height:1.75;
+  display:block; /* FIX: was flex, causing text overlap */
+}
+.flow-content strong { color:#f0ece4; font-weight:500; }
+
+@media(max-width:768px){
+  .pob-grid,.fee-bar { grid-template-columns:1fr; }
+  .flow-row {
+    grid-template-columns:1fr; /* FIX: stack on mobile */
+    display:block;
+  }
+  .flow-label {
+    padding:16px 20px 8px;
+    border-bottom:none;
+  }
+  .flow-content {
+    padding:8px 20px 20px;
+  }
+}
+  </style>
 </head>
 <body>
 <nav id="main-nav" style="position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(8,8,8,0.96);backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-bottom-color 0.3s;box-sizing:border-box;">
@@ -115,8 +155,10 @@
       <div><span class="footer-logo">MS</span><p class="footer-note" id="footer-copy">&#x00A9; 2026 Miracle Shaker &#xB7; Poland, Gda&#x0144;sk</p></div>
       <nav class="footer-nav-col" style="position:static;background:none;border:none;backdrop-filter:none;height:auto;">
         <a href="index.html" data-en="Home" data-ru="&#x413;&#x43B;&#x430;&#x432;&#x43D;&#x430;&#x44F;" data-ua="&#x413;&#x43E;&#x43B;&#x43E;&#x432;&#x43D;&#x430;">Home</a>
-        <a href="shaker.html">Shaker</a><a href="nft-tales.html">NFT Tales</a>
-        <a href="game.html" data-en="Game" data-ru="&#x418;&#x433;&#x440;&#x430;" data-ua="&#x413;&#x440;&#x430;">Game</a><a href="faq.html">FAQ</a>
+        <a href="shaker.html">Shaker</a>
+        <a href="nft-tales.html">NFT Tales</a>
+        <a href="game.html" data-en="Game" data-ru="&#x418;&#x433;&#x440;&#x430;" data-ua="&#x413;&#x440;&#x430;">Game</a>
+        <a href="faq.html">FAQ</a>
       </nav>
       <div class="footer-socials">
         <a href="https://x.com/MiracleShaker" class="footer-social-link" target="_blank">X / Twitter</a>
