@@ -438,7 +438,6 @@ nav .nav-right {
 }
 
 @media (min-width: 769px) {
-  #nav-burger          { display: none !important; }
   #slide-menu          { max-width: 360px; }
 }
 
