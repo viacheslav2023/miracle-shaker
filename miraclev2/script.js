@@ -98,7 +98,7 @@ function closeMenu() {
 var walletPubkey = null;
 var walletProvider = null;
 var TACO_MINT = '3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr';
-var RPC = 'https://mainnet.helius-rpc.com/?api-key=PUBLIC';
+var RPC = 'https://mainnet.helius-rpc.com/?api-key=adf0dc62-3c25-4948-aa23-2ae245ec1a10';
 
 function showWalletModal() {
   if (walletPubkey) { disconnectWallet(); return; }
