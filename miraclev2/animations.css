@@ -1,0 +1,282 @@
+/* ═══════════════════════════════════════════
+   MIRACLE SHAKER — ANIMATIONS v1.0
+   Подключи в <head>: <link rel="stylesheet" href="animations.css">
+   ═══════════════════════════════════════════ */
+
+/* ── 1. HERO CHICKEN — покачивание + parallax ── */
+.hero-chicken {
+  animation: chickenFloat 6s ease-in-out infinite;
+  transform-origin: bottom center;
+  opacity: 0;
+  animation: chickenIn 1.2s ease forwards 0.5s, chickenFloat 6s ease-in-out infinite 1.7s;
+}
+
+@keyframes chickenIn {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 0.15; transform: translateY(0); }
+}
+
+@keyframes chickenFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25%       { transform: translateY(-12px) rotate(0.5deg); }
+  75%       { transform: translateY(-6px) rotate(-0.5deg); }
+}
+
+/* ── 2. HERO TITLE — буквы появляются ── */
+.hero h1 {
+  opacity: 0;
+  animation: heroTitleIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards 0.3s;
+}
+
+@keyframes heroTitleIn {
+  from { opacity: 0; transform: translateY(30px) skewY(2deg); }
+  to   { opacity: 1; transform: translateY(0) skewY(0); }
+}
+
+/* Hero tag badge */
+.hero > div > div:first-child {
+  opacity: 0;
+  animation: fadeSlideIn 0.6s ease forwards 0.1s;
+}
+
+/* Hero description */
+.hero p {
+  opacity: 0;
+  animation: fadeSlideIn 0.6s ease forwards 0.5s;
+}
+
+/* Hero buttons */
+.hero .btn {
+  opacity: 0;
+  animation: fadeSlideIn 0.6s ease forwards 0.7s;
+}
+
+/* Token strip */
+.token-strip {
+  opacity: 0;
+  animation: fadeSlideIn 0.6s ease forwards 0.9s;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 3. MIRACLE SHAKER LOGO — glitch эффект ── */
+#main-nav a[href="index.html"] {
+  position: relative;
+  display: inline-block;
+}
+
+#main-nav a[href="index.html"]:hover {
+  animation: glitch 0.4s steps(2) infinite;
+}
+
+@keyframes glitch {
+  0%   { text-shadow: 2px 0 #ff6b1a, -2px 0 rgba(255,107,26,0.3); transform: translate(0); }
+  20%  { text-shadow: -2px 0 #ff6b1a, 2px 0 rgba(255,107,26,0.3); transform: translate(-1px, 1px); }
+  40%  { text-shadow: 2px 0 rgba(255,107,26,0.5), -2px 0 #ff6b1a; transform: translate(1px, -1px); }
+  60%  { text-shadow: -1px 0 #ff6b1a, 1px 0 rgba(255,107,26,0.3); transform: translate(0); }
+  80%  { text-shadow: 1px 0 rgba(255,107,26,0.5), -1px 0 #ff6b1a; transform: translate(1px, 0); }
+  100% { text-shadow: 2px 0 #ff6b1a, -2px 0 rgba(255,107,26,0.3); transform: translate(0); }
+}
+
+/* ── 4. BUY TACO КНОПКА — пульсация ── */
+.btn-primary,
+a[style*="background:#ff6b1a"][href*="printr"],
+#nav-buy {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after,
+a.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.15);
+  border-radius: inherit;
+  animation: btnPulse 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes btnPulse {
+  0%, 100% { opacity: 0; transform: scale(1); }
+  50%       { opacity: 1; transform: scale(1.05); }
+}
+
+/* Nav BUY TACO пульсация */
+#nav-buy {
+  animation: navBuyPulse 3s ease-in-out infinite;
+}
+
+@keyframes navBuyPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,26,0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(255,107,26,0); }
+}
+
+/* ── 5. TICKER — замедляется при наведении ── */
+.ticker:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+.ticker-track {
+  transition: animation-play-state 0.3s;
+}
+
+/* ── 6. REVEAL — усиленный при скролле ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger для card-grid */
+.card-grid-4 .card:nth-child(1) { transition-delay: 0s; }
+.card-grid-4 .card:nth-child(2) { transition-delay: 0.1s; }
+.card-grid-4 .card:nth-child(3) { transition-delay: 0.2s; }
+.card-grid-4 .card:nth-child(4) { transition-delay: 0.3s; }
+
+/* Roadmap items */
+.roadmap-item {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.roadmap-item.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+.roadmap-item:nth-child(1) { transition-delay: 0s; }
+.roadmap-item:nth-child(2) { transition-delay: 0.1s; }
+.roadmap-item:nth-child(3) { transition-delay: 0.2s; }
+.roadmap-item:nth-child(4) { transition-delay: 0.3s; }
+
+/* ── 7. LIVE STATS — цифры накручиваются ── */
+.sc .sv {
+  transition: color 0.3s;
+}
+
+/* ── 8. КАРТОЧКИ — hover эффект ── */
+.card {
+  transition: background 0.2s, transform 0.25s, box-shadow 0.25s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(255,107,26,0.08);
+}
+
+/* ── 9. HERO GRID — анимированный фон ── */
+.hero-grid {
+  animation: gridPulse 8s ease-in-out infinite;
+}
+
+@keyframes gridPulse {
+  0%, 100% { opacity: 0.22; }
+  50%       { opacity: 0.12; }
+}
+
+/* ── 10. HERO BG — плавное мерцание ── */
+.hero-bg {
+  animation: bgPulse 10s ease-in-out infinite;
+}
+
+@keyframes bgPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+
+/* ── 11. ЧАСТИЦЫ на hero ── */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,107,26,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 20%, rgba(255,107,26,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 70%, rgba(255,107,26,0.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 60%, rgba(255,107,26,0.25) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 80%, rgba(255,107,26,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 10%, rgba(255,107,26,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 50%, rgba(255,107,26,0.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 80%, rgba(255,107,26,0.25) 0%, transparent 100%),
+    radial-gradient(2px 2px at 50% 40%, rgba(255,107,26,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 55%, rgba(255,107,26,0.3) 0%, transparent 100%);
+  animation: particlesFloat 20s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes particlesFloat {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-30px); }
+}
+
+/* ── 12. GRADUATION BAR анимация ── */
+.gf {
+  transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* ── 13. STAT VALUES в live-stats ── */
+.sc {
+  transition: background 0.2s, transform 0.2s;
+}
+
+.sc:hover {
+  transform: translateY(-2px);
+}
+
+/* ── 14. FOOTER LOGO ── */
+.footer-logo {
+  display: inline-block;
+  transition: color 0.3s, letter-spacing 0.3s;
+}
+
+.footer-logo:hover {
+  letter-spacing: 6px;
+  color: #ffd166;
+}
+
+/* ── 15. CTA SECTION — пульсирующий фон ── */
+div[style*="background:#ff6b1a"] {
+  position: relative;
+  overflow: hidden;
+}
+
+div[style*="background:#ff6b1a"]::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.08) 0%, transparent 70%);
+  animation: ctaPulse 4s ease-in-out infinite;
+}
+
+@keyframes ctaPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50%       { transform: scale(1.1); opacity: 1; }
+}
+
+/* ── 16. MOBILE оптимизация ── */
+@media (max-width: 768px) {
+  .hero-chicken {
+    animation: chickenIn 1.2s ease forwards 0.5s;
+  }
+  @keyframes chickenFloat { /* отключаем на мобильном */ }
+
+  .hero::before { display: none; } /* убираем частицы на мобильном */
+}
+
+/* ── 17. REDUCED MOTION — уважаем настройки пользователя ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

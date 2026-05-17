@@ -336,3 +336,87 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 window.addEventListener('resize', initMobileNav);
+
+// ── ANIMATIONS ────────────────────────────────
+
+// Счётчик цифр — накручивается от 0 до значения
+function animateCounter(el, target, duration, prefix, suffix) {
+  if (!el) return;
+  var start = 0;
+  var startTime = null;
+  var isFloat = String(target).includes('.');
+  var decimals = isFloat ? String(target).split('.')[1].length : 0;
+
+  function step(timestamp) {
+    if (!startTime) startTime = timestamp;
+    var progress = Math.min((timestamp - startTime) / duration, 1);
+    var ease = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+    var current = start + (target - start) * ease;
+    el.textContent = (prefix||'') + (isFloat ? current.toFixed(decimals) : Math.floor(current)) + (suffix||'');
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = (prefix||'') + target + (suffix||'');
+  }
+  requestAnimationFrame(step);
+}
+
+// Запускаем счётчики когда live-stats появляется
+function initCounters() {
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (!e.isIntersecting) return;
+      obs.unobserve(e.target);
+
+      // Находим все .sv элементы
+      var cells = [
+        { id: 'sc-holders',  target: 4,      prefix: '',   suffix: '',   dur: 1200 },
+        { id: 'sc-staked',   target: 52.7,   prefix: '',   suffix: 'M',  dur: 1800 },
+        { id: 'sc-mcap',     target: 4.45,   prefix: '$',  suffix: 'K',  dur: 1500 },
+        { id: 'sc-liq',      target: 250,    prefix: '$',  suffix: '',   dur: 1000 },
+        { id: 'sc-grad',     target: 1.59,   prefix: '',   suffix: '%',  dur: 1200 },
+      ];
+
+      cells.forEach(function(c) {
+        var el = document.getElementById(c.id);
+        if (el) {
+          var sv = el.querySelector('.sv');
+          if (sv) animateCounter(sv, c.target, c.dur, c.prefix, c.suffix);
+        }
+      });
+    });
+  }, { threshold: 0.3 });
+
+  var statsBlock = document.getElementById('live-stats-block');
+  if (statsBlock) obs.observe(statsBlock);
+}
+
+// Roadmap reveal с slide-in
+function initRoadmapReveal() {
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.roadmap-item').forEach(function(el) {
+    obs.observe(el);
+  });
+}
+
+// Parallax для Donald Cluck при скролле
+function initParallax() {
+  var chicken = document.querySelector('.hero-chicken');
+  if (!chicken) return;
+  window.addEventListener('scroll', function() {
+    var scrollY = window.scrollY;
+    chicken.style.transform = 'translateY(' + (scrollY * 0.15) + 'px)';
+  }, { passive: true });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(initCounters, 1000);
+  initRoadmapReveal();
+  initParallax();
+});
