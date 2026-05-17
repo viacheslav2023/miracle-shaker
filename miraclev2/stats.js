@@ -1,24 +1,26 @@
-/* MIRACLE SHAKER — LIVE STATS v4.0 */
+/* MIRACLE SHAKER — LIVE STATS v5.0 */
+/* Использует Cloudflare Worker как proxy */
 
-var TACO_CA = '3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr';
-var HELIUS = 'https://mainnet.helius-rpc.com/?api-key=adf0dc62-3c25-4948-aa23-2ae245ec1a10';
-var PRINTR = 'https://app.printr.money/api/getToken/' + TACO_CA;
+var TACO_CA  = '3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr';
+var HELIUS   = 'https://mainnet.helius-rpc.com/?api-key=adf0dc62-3c25-4948-aa23-2ae245ec1a10';
+// !! Замени на свой URL после деплоя воркера !!
+var WORKER   = 'https://quiet-recipe-e49c.mastram-sm.workers.dev';
 
 function fmtNum(n) {
   if (!n && n !== 0) return '—';
   n = Number(n);
-  if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
-  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
-  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  if (n >= 1e9) return (n/1e9).toFixed(1)+'B';
+  if (n >= 1e6) return (n/1e6).toFixed(2)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
   return String(Math.round(n));
 }
 
 function fmtUSD(n) {
   if (!n && n !== 0) return '—';
   n = Number(n);
-  if (n >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
-  if (n >= 1e3) return '$' + (n/1e3).toFixed(1) + 'K';
-  return '$' + n.toFixed(2);
+  if (n >= 1e6) return '$'+(n/1e6).toFixed(2)+'M';
+  if (n >= 1e3) return '$'+(n/1e3).toFixed(1)+'K';
+  return '$'+n.toFixed(2);
 }
 
 function setVal(id, val, sub, subCls) {
@@ -28,51 +30,31 @@ function setVal(id, val, sub, subCls) {
   var s = el.querySelector('.ss');
   if (s && sub !== undefined) {
     s.textContent = sub;
-    s.className = 'ss' + (subCls ? ' ' + subCls : '');
+    s.className = 'ss'+(subCls?' '+subCls:'');
   }
 }
 
-// ── PRINTR API via proxy ───────────────────────
-async function fetchPrintr() {
-  // Try via allorigins proxy (bypasses CORS)
-  var proxies = [
-    'https://api.allorigins.win/get?url=' + encodeURIComponent(PRINTR),
-    'https://corsproxy.io/?' + encodeURIComponent(PRINTR),
-  ];
-  for (var i = 0; i < proxies.length; i++) {
-    try {
-      var r = await fetch(proxies[i]);
-      var w = await r.json();
-      var raw = w.contents || w;
-      var data = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      if (data && (data.marketCap || data.holders)) return data;
-    } catch(e) { continue; }
-  }
-  // Try direct (may work if CORS allows)
+async function fetchWorker() {
   try {
-    var r2 = await fetch(PRINTR);
-    var d2 = await r2.json();
-    if (d2 && (d2.marketCap || d2.holders)) return d2;
-  } catch(e) {}
-  return null;
+    var r = await fetch(WORKER);
+    return await r.json();
+  } catch(e) { return null; }
 }
 
-// ── HOLDERS via Helius ─────────────────────────
 async function fetchHolders() {
   try {
     var page = 1, total = 0;
     while (true) {
       var r = await fetch(HELIUS, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-          jsonrpc: '2.0', id: 'h' + page,
-          method: 'getTokenAccounts',
-          params: { mint: TACO_CA, page: page, limit: 1000, options: { showZeroBalance: false } }
+          jsonrpc:'2.0', id:'h'+page,
+          method:'getTokenAccounts',
+          params:{ mint:TACO_CA, page:page, limit:1000, options:{showZeroBalance:false} }
         })
       });
       var d = await r.json();
-      if (!d.result || !d.result.token_accounts || !d.result.token_accounts.length) break;
+      if (!d.result||!d.result.token_accounts||!d.result.token_accounts.length) break;
       total += d.result.token_accounts.length;
       if (d.result.token_accounts.length < 1000) break;
       page++;
@@ -81,16 +63,14 @@ async function fetchHolders() {
   } catch(e) { return null; }
 }
 
-// ── VISIT COUNTER ──────────────────────────────
 async function fetchVisits() {
   try {
     var r = await fetch('https://api.countapi.xyz/hit/miracleshaker.com/visits2026');
     var d = await r.json();
-    return d.value || null;
+    return d.value||null;
   } catch(e) { return null; }
 }
 
-// ── BUILD BLOCK ────────────────────────────────
 function buildBlock() {
   if (document.getElementById('live-stats-block')) return;
   var html = `
@@ -106,7 +86,7 @@ function buildBlock() {
 .sc .sl{font-family:monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;display:block;margin-bottom:8px;}
 .sc .sv{font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:#ff6b1a;display:block;line-height:1;margin-bottom:4px;}
 .sc .ss{font-family:monospace;font-size:9px;color:#444;letter-spacing:1px;display:block;}
-.sc .ss.up{color:#4ade80;} .sc .ss.dn{color:#ef4444;} .sc .ss.nt{color:#666;}
+.sc .ss.up{color:#4ade80;}.sc .ss.dn{color:#ef4444;}.sc .ss.nt{color:#666;}
 @media(max-width:900px){.ls-gr{grid-template-columns:repeat(3,1fr)!important;}}
 @media(max-width:560px){.ls-gr{grid-template-columns:repeat(2,1fr)!important;}.ls-in{padding:0 20px;}}
 </style>
@@ -122,7 +102,7 @@ function buildBlock() {
       <div class="sc" id="sc-mcap"><span class="sl">MARKET CAP</span><span class="sv">$4.45K</span><span class="ss nt">Live</span></div>
       <div class="sc" id="sc-liq"><span class="sl">LIQUIDITY</span><span class="sv">$250</span><span class="ss nt">Pool</span></div>
       <div class="sc" id="sc-grad"><span class="sl">GRADUATION</span><span class="sv">1.59%</span><span class="ss nt">До листинга</span></div>
-      <div class="sc" id="sc-visits"><span class="sv">—</span><span class="sl">SITE VISITS</span><span class="ss nt">Посещений</span></div>
+      <div class="sc" id="sc-visits"><span class="sl">SITE VISITS</span><span class="sv">—</span><span class="ss nt">Посещений</span></div>
     </div>
   </div>
 </div>`;
@@ -131,48 +111,38 @@ function buildBlock() {
   else document.body.insertAdjacentHTML('afterbegin', html);
 }
 
-// ── UPDATE ─────────────────────────────────────
 var prevHolders = null;
 
 async function updateStats() {
-  var results = await Promise.allSettled([fetchPrintr(), fetchHolders(), fetchVisits()]);
-  var printr  = results[0].status === 'fulfilled' ? results[0].value : null;
-  var holders = results[1].status === 'fulfilled' ? results[1].value : null;
-  var visits  = results[2].status === 'fulfilled' ? results[2].value : null;
+  var results = await Promise.allSettled([fetchWorker(), fetchHolders(), fetchVisits()]);
+  var worker  = results[0].status==='fulfilled' ? results[0].value : null;
+  var holders = results[1].status==='fulfilled' ? results[1].value : null;
+  var visits  = results[2].status==='fulfilled' ? results[2].value : null;
 
-  // Printr data
-  if (printr) {
-    var mcap = printr.marketCap || printr.combinedMarketCap || 0;
-    var liq  = printr.liquidity || printr.combinedLiquidity || 0;
-    var grad = printr.graduationProgressPercentage || 0;
-    var h    = printr.holders || printr.combinedHolders || 0;
-
-    if (mcap) setVal('sc-mcap', fmtUSD(mcap), 'Live', 'nt');
-    if (liq)  setVal('sc-liq',  fmtUSD(liq),  'Pool', 'nt');
-    if (grad) setVal('sc-grad', grad.toFixed(2) + '%', 'До листинга', 'nt');
-    // Use Printr holders as fallback
-    if (h && holders === null) setVal('sc-holders', String(h), 'Кошельков', 'nt');
+  if (worker) {
+    setVal('sc-mcap',  fmtUSD(worker.marketCap), 'Live', 'nt');
+    setVal('sc-liq',   fmtUSD(worker.liquidity),  'Pool', 'nt');
+    setVal('sc-grad',  Number(worker.graduation).toFixed(2)+'%', 'До листинга', 'nt');
+    setVal('sc-staked', fmtNum(worker.staked), 'POB Staking', 'nt');
+    if (!holders && worker.holders) setVal('sc-holders', String(worker.holders), 'Кошельков', 'nt');
   }
 
-  // Helius holders (more accurate)
   if (holders !== null) {
     var sub = 'Кошельков';
     if (prevHolders !== null && holders !== prevHolders) {
       var diff = holders - prevHolders;
-      sub = (diff > 0 ? '+' : '') + diff + ' за сессию';
+      sub = (diff>0?'+':'')+diff+' за сессию';
     }
     prevHolders = holders;
     setVal('sc-holders', String(holders), sub, 'nt');
   }
 
-  // Visits
   if (visits !== null) setVal('sc-visits', fmtNum(visits), 'Посещений', 'nt');
 
   var t = document.getElementById('ls-time');
-  if (t) t.textContent = 'Обновлено: ' + new Date().toLocaleTimeString();
+  if (t) t.textContent = 'Обновлено: '+new Date().toLocaleTimeString();
 }
 
-// ── INIT ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   buildBlock();
   setTimeout(updateStats, 800);
