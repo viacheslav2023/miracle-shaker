@@ -338,6 +338,67 @@ document.addEventListener('DOMContentLoaded', function(){
 window.addEventListener('resize', initMobileNav);
 
 // ── ANIMATIONS ────────────────────────────────
+// ── CANVAS PARTICLES на hero ──────────────────
+function initParticles() {
+  var hero = document.querySelector('.hero');
+  if (!hero) return;
+
+  // Создаём canvas
+  var canvas = document.createElement('canvas');
+  canvas.id = 'hero-particles';
+  canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;';
+  hero.insertBefore(canvas, hero.firstChild);
+
+  var ctx = canvas.getContext('2d');
+  var W, H, particles = [];
+
+  function resize() {
+    W = canvas.width  = hero.offsetWidth;
+    H = canvas.height = hero.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize, {passive:true});
+
+  // Создаём частицы
+  var COUNT = window.innerWidth < 768 ? 25 : 55;
+  for (var i = 0; i < COUNT; i++) {
+    particles.push({
+      x:     Math.random() * W,
+      y:     Math.random() * H,
+      r:     Math.random() * 1.8 + 0.4,
+      speedX: (Math.random() - 0.5) * 0.4,
+      speedY: -(Math.random() * 0.5 + 0.2),
+      alpha:  Math.random() * 0.6 + 0.2,
+      pulse:  Math.random() * Math.PI * 2
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    var t = Date.now() / 1000;
+
+    particles.forEach(function(p) {
+      p.x += p.speedX;
+      p.y += p.speedY;
+      p.pulse += 0.02;
+
+      // Wrap around
+      if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W; }
+      if (p.x < -5) p.x = W + 5;
+      if (p.x > W + 5) p.x = -5;
+
+      var alpha = p.alpha * (0.6 + 0.4 * Math.sin(p.pulse));
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,107,26,' + alpha + ')';
+      ctx.fill();
+    });
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
 
 // Счётчик цифр — накручивается от 0 до значения
 function animateCounter(el, target, duration, prefix, suffix) {
@@ -419,4 +480,5 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(initCounters, 1000);
   initRoadmapReveal();
   initParallax();
+  initParticles();
 });

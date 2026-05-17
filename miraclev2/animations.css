@@ -193,31 +193,7 @@ a.btn-primary::after {
   50%       { opacity: 0.7; }
 }
 
-/* ── 11. ЧАСТИЦЫ на hero ── */
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(1px 1px at 20% 30%, rgba(255,107,26,0.4) 0%, transparent 100%),
-    radial-gradient(1px 1px at 80% 20%, rgba(255,107,26,0.3) 0%, transparent 100%),
-    radial-gradient(1px 1px at 60% 70%, rgba(255,107,26,0.35) 0%, transparent 100%),
-    radial-gradient(1px 1px at 10% 60%, rgba(255,107,26,0.25) 0%, transparent 100%),
-    radial-gradient(1px 1px at 90% 80%, rgba(255,107,26,0.3) 0%, transparent 100%),
-    radial-gradient(1px 1px at 40% 10%, rgba(255,107,26,0.2) 0%, transparent 100%),
-    radial-gradient(1px 1px at 70% 50%, rgba(255,107,26,0.35) 0%, transparent 100%),
-    radial-gradient(1px 1px at 30% 80%, rgba(255,107,26,0.25) 0%, transparent 100%),
-    radial-gradient(2px 2px at 50% 40%, rgba(255,107,26,0.2) 0%, transparent 100%),
-    radial-gradient(1px 1px at 85% 55%, rgba(255,107,26,0.3) 0%, transparent 100%);
-  animation: particlesFloat 20s linear infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-
-@keyframes particlesFloat {
-  0%   { transform: translateY(0); }
-  100% { transform: translateY(-30px); }
-}
+/* ── 11. ЧАСТИЦЫ на hero — убраны из CSS, добавлены через Canvas в script.js ── */
 
 /* ── 12. GRADUATION BAR анимация ── */
 .gf {
@@ -270,7 +246,7 @@ div[style*="background:#ff6b1a"]::before {
   }
   @keyframes chickenFloat { /* отключаем на мобильном */ }
 
-  .hero::before { display: none; } /* убираем частицы на мобильном */
+
 }
 
 /* ── 17. REDUCED MOTION — уважаем настройки пользователя ── */
