@@ -507,9 +507,9 @@ img{display:block;max-width:100%;}
     <a href="https://www.miracleshaker.com/index.html" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:19px;letter-spacing:4px;color:#ff6b1a;text-decoration:none;flex-shrink:0;">MIRACLE SHAKER</a>
     <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
       <div style="display:flex;gap:2px;background:#1e1e1e;padding:2px;">
-        <button class="lang-btn" data-lang="en" style="font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:none;color:#555;padding:5px 8px;cursor:pointer;transition:all 0.2s;">EN</button>
-        <button class="lang-btn" data-lang="ru" style="font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:none;color:#555;padding:5px 8px;cursor:pointer;transition:all 0.2s;">RU</button>
-        <button class="lang-btn" data-lang="ua" style="font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:none;color:#555;padding:5px 8px;cursor:pointer;transition:all 0.2s;">UA</button>
+        <button class="lang-btn" id="lb-en" data-lang="en" style="font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:none;color:#555;padding:5px 8px;cursor:pointer;transition:all 0.2s;" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="lb-ru" data-lang="ru" style="font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:none;color:#555;padding:5px 8px;cursor:pointer;transition:all 0.2s;" onclick="setLang('ru')">RU</button>
+        <button class="lang-btn" id="lb-ua" data-lang="ua" style="font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:none;color:#555;padding:5px 8px;cursor:pointer;transition:all 0.2s;" onclick="setLang('ua')">UA</button>
       </div>
       <button id="wallet-btn" style="font-family:monospace;font-size:9px;letter-spacing:1px;color:#888;background:none;border:1px solid #2a2a2a;padding:7px 12px;cursor:pointer;transition:all 0.2s;white-space:nowrap;">WALLET</button>
       <a href="https://app.printr.money/trade/3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr" id="nav-buy" target="_blank" style="font-family:monospace;font-size:9px;letter-spacing:1px;color:#080808;background:#ff6b1a;padding:7px 12px;text-decoration:none;font-weight:700;white-space:nowrap;">BUY TACO</a>
@@ -1329,7 +1329,7 @@ const LANGS = {
   }
 };
 
-let currentLang = localStorage.getItem('ms_lang') || 'ru';
+let currentLang = localStorage.getItem('ms_lang') || 'en';
 
 function setLang(lang) {
   currentLang = lang;
@@ -1337,7 +1337,8 @@ function setLang(lang) {
   
   // Update buttons
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('lb-' + lang).classList.add('active');
+  var lbEl = document.getElementById('lb-' + lang);
+  if(lbEl) lbEl.classList.add('active');
   
   const t = LANGS[lang];
   
