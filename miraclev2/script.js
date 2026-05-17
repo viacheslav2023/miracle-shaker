@@ -98,7 +98,7 @@ function closeMenu() {
 var walletPubkey = null;
 var walletProvider = null;
 var TACO_MINT = '3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr';
-var RPC = 'https://rpc.ankr.com/solana';
+var RPC = 'https://mainnet.helius-rpc.com/?api-key=PUBLIC';
 
 function showWalletModal() {
   if (walletPubkey) { disconnectWallet(); return; }
