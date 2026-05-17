@@ -1,276 +1,211 @@
-/* MIRACLE SHAKER — LIVE STATS v1.0 */
+/* MIRACLE SHAKER — LIVE STATS v2.0 */
 
 var TACO_CA = '3kemsuKXgMGmDu7oASK9m2BKeFyGGyzDsyNgvrBtbrrr';
-var PRINTR_API = 'https://app.printr.money/api/getToken/' + TACO_CA;
-var HELIUS_RPC = 'https://mainnet.helius-rpc.com/?api-key=adf0dc62-3c25-4948-aa23-2ae245ec1a10';
+var HELIUS = 'https://mainnet.helius-rpc.com/?api-key=adf0dc62-3c25-4948-aa23-2ae245ec1a10';
+var DEXSCREENER = 'https://api.dexscreener.com/latest/dex/tokens/' + TACO_CA;
 
-// ── FETCH TOKEN DATA ──────────────────────────
-async function fetchTokenData() {
-  try {
-    var res = await fetch(PRINTR_API);
-    var data = await res.json();
-    return data;
-  } catch(e) {
-    console.error('Stats fetch error:', e);
-    return null;
-  }
-}
-
-// ── FORMAT NUMBERS ────────────────────────────
 function fmtNum(n) {
   if (!n && n !== 0) return '—';
   n = Number(n);
-  if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
   if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
-  if (n >= 1e3) return (n/1e3).toFixed(2) + 'K';
-  return n.toFixed(2);
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return String(Math.round(n));
 }
 
 function fmtUSD(n) {
   if (!n && n !== 0) return '—';
   n = Number(n);
   if (n >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
-  if (n >= 1e3) return '$' + (n/1e3).toFixed(2) + 'K';
+  if (n >= 1e3) return '$' + (n/1e3).toFixed(1) + 'K';
   return '$' + n.toFixed(2);
 }
 
-// ── FETCH STAKED AMOUNT via Helius ────────────
-async function fetchStakedTACO() {
+function setCell(id, val, sub, subClass) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var v = el.querySelector('.sv'); if (v) v.textContent = val;
+  var s = el.querySelector('.ss');
+  if (s && sub !== undefined) {
+    s.textContent = sub;
+    s.className = 'ss' + (subClass ? ' ' + subClass : '');
+  }
+}
+
+// ── DEXSCREENER ───────────────────────────────
+async function fetchDex() {
   try {
-    // Get all token accounts for TACO
-    var res = await fetch(HELIUS_RPC, {
+    var r = await fetch(DEXSCREENER);
+    var d = await r.json();
+    var pairs = d.pairs || [];
+    if (!pairs.length) return null;
+    // Get the most liquid pair
+    pairs.sort(function(a,b){ return (b.liquidity&&b.liquidity.usd||0)-(a.liquidity&&a.liquidity.usd||0); });
+    return pairs[0];
+  } catch(e) { return null; }
+}
+
+// ── HELIUS: HOLDERS COUNT ─────────────────────
+async function fetchHolders() {
+  try {
+    // Use getProgramAccounts to count token holders
+    var r = await fetch(HELIUS, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        jsonrpc: '2.0', id: 1,
-        method: 'getTokenSupply',
-        params: [TACO_CA]
+        jsonrpc:'2.0', id:1,
+        method:'getProgramAccounts',
+        params:[
+          'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+          {
+            encoding:'jsonParsed',
+            commitment:'confirmed',
+            filters:[
+              {dataSize:165},
+              {memcmp:{offset:0, bytes:TACO_CA}}
+            ]
+          }
+        ]
       })
     });
-    var d = await res.json();
-    return d.result && d.result.value ? d.result.value.uiAmount : null;
+    var d = await r.json();
+    if (!d.result) return null;
+    // Count only accounts with balance > 0
+    var active = d.result.filter(function(a){
+      try {
+        return a.account.data.parsed.info.tokenAmount.uiAmount > 0;
+      } catch(e){ return false; }
+    });
+    return active.length;
   } catch(e) { return null; }
 }
 
 // ── VISIT COUNTER ─────────────────────────────
-async function fetchVisitCount() {
+async function fetchVisits() {
   try {
-    // Increment counter
-    var res = await fetch('https://api.countapi.xyz/hit/miracleshaker.com/visits');
-    var d = await res.json();
-    return d.value || 0;
-  } catch(e) {
-    // Fallback - just get count without increment
-    try {
-      var res2 = await fetch('https://api.countapi.xyz/get/miracleshaker.com/visits');
-      var d2 = await res2.json();
-      return d2.value || 0;
-    } catch(e2) { return null; }
-  }
+    var r = await fetch('https://api.countapi.xyz/hit/miracleshaker.com/pageviews');
+    var d = await r.json();
+    return d.value || null;
+  } catch(e) { return null; }
 }
 
-// ── BUILD STATS HTML ──────────────────────────
-function buildStatsBlock() {
-  var block = document.getElementById('live-stats-block');
-  if (block) return; // Already exists
+// ── BUILD BLOCK ───────────────────────────────
+function buildBlock() {
+  if (document.getElementById('live-stats-block')) return;
 
-  var html = `
-  <div id="live-stats-block" style="
-    background:#0d0d0d;
-    border-top:1px solid #1e1e1e;
-    border-bottom:1px solid #1e1e1e;
-    padding:32px 0;
-  ">
-    <div style="max-width:1200px;margin:0 auto;padding:0 40px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-        <span style="font-family:monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#ff6b1a;">
-          ◆ Live Stats
-        </span>
-        <span id="stats-updated" style="font-family:monospace;font-size:9px;color:#333;letter-spacing:1px;">
-          Updating...
-        </span>
+  var css = `
+<style>
+#live-stats-block { background:#0d0d0d; border-top:1px solid #1e1e1e; border-bottom:1px solid #1e1e1e; padding:28px 0; }
+#live-stats-block .ls-inner { max-width:1200px; margin:0 auto; padding:0 40px; }
+#live-stats-block .ls-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+#live-stats-block .ls-label { font-family:monospace; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:#ff6b1a; }
+#live-stats-block .ls-time { font-family:monospace; font-size:9px; color:#333; letter-spacing:1px; }
+#live-stats-block .ls-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:2px; background:#1e1e1e; }
+.sc { background:#111; padding:18px 12px; text-align:center; transition:background 0.2s; }
+.sc:hover { background:#141414; }
+.sc .sl { font-family:monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; display:block; margin-bottom:8px; }
+.sc .sv { font-family:'Bebas Neue',Impact,sans-serif; font-size:26px; letter-spacing:1px; color:#ff6b1a; display:block; line-height:1; margin-bottom:4px; }
+.sc .ss { font-family:monospace; font-size:9px; color:#444; letter-spacing:1px; display:block; }
+.sc .ss.up { color:#4ade80; }
+.sc .ss.dn { color:#ef4444; }
+.sc .ss.nt { color:#888; }
+.gb { height:2px; background:#1e1e1e; margin-top:6px; }
+.gf { height:100%; background:#ff6b1a; transition:width 1s ease; width:0%; }
+@media(max-width:900px){ #live-stats-block .ls-grid { grid-template-columns:repeat(3,1fr) !important; } }
+@media(max-width:560px){ #live-stats-block .ls-grid { grid-template-columns:repeat(2,1fr) !important; } #live-stats-block .ls-inner { padding:0 20px; } }
+</style>`;
+
+  var html = css + `
+<div id="live-stats-block">
+  <div class="ls-inner">
+    <div class="ls-head">
+      <span class="ls-label">◆ Live Stats</span>
+      <span class="ls-time" id="ls-time">Загрузка...</span>
+    </div>
+    <div class="ls-grid">
+      <div class="sc" id="sc-holders">
+        <span class="sl">HOLDERS</span>
+        <span class="sv">—</span>
+        <span class="ss">Уникальных кошельков</span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:#1e1e1e;" id="stats-grid">
-        <div class="stat-cell" id="stat-holders">
-          <label>HOLDERS</label>
-          <span class="val">—</span>
-          <span class="sub" id="stat-holders-change"></span>
-        </div>
-        <div class="stat-cell" id="stat-staked">
-          <label>TACO STAKED</label>
-          <span class="val">—</span>
-          <span class="sub">POB Staking</span>
-        </div>
-        <div class="stat-cell" id="stat-mcap">
-          <label>MARKET CAP</label>
-          <span class="val">—</span>
-          <span class="sub">Solana</span>
-        </div>
-        <div class="stat-cell" id="stat-liquidity">
-          <label>LIQUIDITY</label>
-          <span class="val">—</span>
-          <span class="sub">Pool</span>
-        </div>
-        <div class="stat-cell" id="stat-graduation">
-          <label>TO GRADUATION</label>
-          <span class="val">—</span>
-          <span class="sub">Progress</span>
-        </div>
-        <div class="stat-cell" id="stat-visits">
-          <label>SITE VISITS</label>
-          <span class="val">—</span>
-          <span class="sub">Total</span>
-        </div>
+      <div class="sc" id="sc-staked">
+        <span class="sl">TACO STAKED</span>
+        <span class="sv">52.7M</span>
+        <span class="ss nt">POB Staking</span>
+      </div>
+      <div class="sc" id="sc-mcap">
+        <span class="sl">MARKET CAP</span>
+        <span class="sv">—</span>
+        <span class="ss">Live</span>
+      </div>
+      <div class="sc" id="sc-liq">
+        <span class="sl">LIQUIDITY</span>
+        <span class="sv">—</span>
+        <span class="ss">Pool</span>
+      </div>
+      <div class="sc" id="sc-vol">
+        <span class="sl">VOLUME 24H</span>
+        <span class="sv">—</span>
+        <span class="ss" id="sc-change">—</span>
+      </div>
+      <div class="sc" id="sc-visits">
+        <span class="sl">SITE VISITS</span>
+        <span class="sv">—</span>
+        <span class="ss">Всего посещений</span>
       </div>
     </div>
   </div>
+</div>`;
 
-  <style>
-    .stat-cell {
-      background: #111;
-      padding: 20px 16px;
-      text-align: center;
-      transition: background 0.2s;
-    }
-    .stat-cell:hover { background: #141414; }
-    .stat-cell label {
-      font-family: monospace;
-      font-size: 9px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #555;
-      display: block;
-      margin-bottom: 8px;
-    }
-    .stat-cell .val {
-      font-family: 'Bebas Neue', Impact, sans-serif;
-      font-size: 28px;
-      letter-spacing: 1px;
-      color: #ff6b1a;
-      display: block;
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-    .stat-cell .sub {
-      font-family: monospace;
-      font-size: 9px;
-      color: #444;
-      letter-spacing: 1px;
-    }
-    .stat-cell .sub.up { color: #4ade80; }
-    .stat-cell .sub.down { color: #ef4444; }
-    .grad-bar {
-      height: 2px;
-      background: #1e1e1e;
-      margin-top: 8px;
-      border-radius: 1px;
-      overflow: hidden;
-    }
-    .grad-fill {
-      height: 100%;
-      background: #ff6b1a;
-      transition: width 1s ease;
-    }
-    @media(max-width:900px) {
-      #stats-grid { grid-template-columns: repeat(3,1fr) !important; }
-    }
-    @media(max-width:560px) {
-      #stats-grid { grid-template-columns: repeat(2,1fr) !important; }
-    }
-  </style>
-  `;
-
-  // Insert after ticker
   var ticker = document.querySelector('.ticker');
-  if (ticker) {
-    ticker.insertAdjacentHTML('afterend', html);
-  } else {
-    // Insert after hero section
-    var hero = document.querySelector('.hero');
-    if (hero) hero.insertAdjacentHTML('afterend', html);
-  }
+  if (ticker) ticker.insertAdjacentHTML('afterend', html);
+  else document.body.insertAdjacentHTML('afterbegin', html);
 }
 
-// ── UPDATE STATS ──────────────────────────────
-function setVal(id, val, sub) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  var valEl = el.querySelector('.val');
-  var subEl = el.querySelector('.sub');
-  if (valEl && val !== undefined) valEl.textContent = val;
-  if (subEl && sub !== undefined) {
-    subEl.textContent = sub;
-    subEl.className = 'sub';
-  }
-}
-
+// ── UPDATE ────────────────────────────────────
 var prevHolders = null;
 
 async function updateStats() {
-  var data = await fetchTokenData();
-  var visits = await fetchVisitCount();
+  // DexScreener
+  var pair = await fetchDex();
+  if (pair) {
+    var mcap = pair.fdv || pair.marketCap || 0;
+    var liq = (pair.liquidity && pair.liquidity.usd) || 0;
+    var vol = (pair.volume && pair.volume.h24) || 0;
+    var chg = (pair.priceChange && pair.priceChange.h24) || 0;
 
-  if (data) {
-    // Holders
-    var holders = data.holders || data.combinedHolders || 0;
-    var holderChange = '';
+    setCell('sc-mcap', fmtUSD(mcap), 'FDV Live');
+    setCell('sc-liq', fmtUSD(liq), 'Pool');
+    setCell('sc-vol', fmtUSD(vol),
+      (chg >= 0 ? '+' : '') + chg.toFixed(2) + '% 24h',
+      chg >= 0 ? 'up' : 'dn'
+    );
+  }
+
+  // Holders via Helius
+  var holders = await fetchHolders();
+  if (holders !== null) {
+    var holderSub = 'Уникальных кошельков';
     if (prevHolders !== null && holders !== prevHolders) {
       var diff = holders - prevHolders;
-      holderChange = (diff > 0 ? '+' : '') + diff + ' за сессию';
+      holderSub = (diff > 0 ? '+' : '') + diff + ' за сессию';
     }
     prevHolders = holders;
-    setVal('stat-holders', holders, holderChange || 'Уникальных кошельков');
-
-    // Staked — from Printr data
-    // The staked amount was visible as 52.7M on the page
-    // Try to get from remainingLiquidity or txn data
-    var staked = data.stakedAmount || data.totalStaked || null;
-    // Fallback: show from what we know
-    setVal('stat-staked', staked ? fmtNum(staked) : '52.7M', 'Printr POB');
-
-    // Market Cap
-    var mcap = data.marketCap || data.combinedMarketCap || 0;
-    setVal('stat-mcap', fmtUSD(mcap), 'Live');
-
-    // Liquidity
-    var liq = data.liquidity || data.combinedLiquidity || 0;
-    setVal('stat-liquidity', fmtUSD(liq), 'Pool');
-
-    // Graduation progress
-    var grad = data.graduationProgressPercentage || 0;
-    var gradEl = document.getElementById('stat-graduation');
-    if (gradEl) {
-      var valEl = gradEl.querySelector('.val');
-      var subEl = gradEl.querySelector('.sub');
-      if (valEl) valEl.textContent = grad.toFixed(2) + '%';
-      // Add progress bar
-      var barEl = gradEl.querySelector('.grad-bar');
-      if (!barEl) {
-        gradEl.insertAdjacentHTML('beforeend', '<div class="grad-bar"><div class="grad-fill" id="grad-fill"></div></div>');
-      }
-      var fill = document.getElementById('grad-fill');
-      if (fill) fill.style.width = Math.min(grad, 100) + '%';
-      if (subEl) subEl.textContent = 'До листинга';
-    }
+    setCell('sc-holders', String(holders), holderSub, holders > 0 ? 'nt' : '');
   }
 
   // Visits
-  if (visits !== null) {
-    setVal('stat-visits', fmtNum(visits), 'Всего посещений');
-  }
+  var visits = await fetchVisits();
+  if (visits !== null) setCell('sc-visits', fmtNum(visits), 'Всего посещений');
 
-  // Update timestamp
-  var upd = document.getElementById('stats-updated');
-  if (upd) {
-    var now = new Date();
-    upd.textContent = 'Обновлено: ' + now.toLocaleTimeString();
-  }
+  // Timestamp
+  var t = document.getElementById('ls-time');
+  if (t) t.textContent = 'Обновлено: ' + new Date().toLocaleTimeString();
 }
 
 // ── INIT ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  buildStatsBlock();
+  buildBlock();
   updateStats();
-  // Auto-update every 60 seconds
   setInterval(updateStats, 60000);
 });
