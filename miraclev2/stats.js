@@ -63,21 +63,7 @@ async function fetchHolders() {
   } catch(e) { return null; }
 }
 
-async function fetchVisits() {
-  try {
-    // visitor.6developer.com - free, no auth, CORS support
-    var r = await fetch('https://visitor.6developer.com/api/visit?domain=miracleshaker.com');
-    var d = await r.json();
-    return d.total || d.count || d.visitors || d.value || null;
-  } catch(e) {
-    try {
-      // fallback: api.pageview.rest
-      var r2 = await fetch('https://api.pageview.rest/miracleshaker.com');
-      var d2 = await r2.json();
-      return d2.total || d2.count || null;
-    } catch(e2) { return null; }
-  }
-}
+
 
 function buildBlock() {
   if (document.getElementById('live-stats-block')) return;
@@ -88,7 +74,7 @@ function buildBlock() {
 .ls-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
 .ls-lb{font-family:monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#ff6b1a;}
 .ls-tm{font-family:monospace;font-size:9px;color:#333;letter-spacing:1px;}
-.ls-gr{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:#1e1e1e;}
+.ls-gr{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:#1e1e1e;}
 .sc{background:#111;padding:18px 12px;text-align:center;transition:background .2s;}
 .sc:hover{background:#141414;}
 .sc .sl{font-family:monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;display:block;margin-bottom:8px;}
@@ -110,7 +96,7 @@ function buildBlock() {
       <div class="sc" id="sc-mcap"><span class="sl">MARKET CAP</span><span class="sv">$4.45K</span><span class="ss nt">Live</span></div>
       <div class="sc" id="sc-liq"><span class="sl">LIQUIDITY</span><span class="sv">$250</span><span class="ss nt">Pool</span></div>
       <div class="sc" id="sc-grad"><span class="sl">GRADUATION</span><span class="sv">1.59%</span><span class="ss nt">До листинга</span></div>
-      <div class="sc" id="sc-visits"><span class="sl">SITE VISITS</span><span class="sv">—</span><span class="ss nt">Посещений</span></div>
+
     </div>
   </div>
 </div>`;
@@ -122,10 +108,9 @@ function buildBlock() {
 var prevHolders = null;
 
 async function updateStats() {
-  var results = await Promise.allSettled([fetchWorker(), fetchHolders(), fetchVisits()]);
+  var results = await Promise.allSettled([fetchWorker(), fetchHolders()]);
   var worker  = results[0].status==='fulfilled' ? results[0].value : null;
   var holders = results[1].status==='fulfilled' ? results[1].value : null;
-  var visits  = results[2].status==='fulfilled' ? results[2].value : null;
 
   if (worker) {
     setVal('sc-mcap',  fmtUSD(worker.marketCap), 'Live', 'nt');
@@ -145,7 +130,7 @@ async function updateStats() {
     setVal('sc-holders', String(holders), sub, 'nt');
   }
 
-  if (visits !== null) setVal('sc-visits', fmtNum(visits), 'Посещений', 'nt');
+
 
   var t = document.getElementById('ls-time');
   if (t) t.textContent = 'Обновлено: '+new Date().toLocaleTimeString();
