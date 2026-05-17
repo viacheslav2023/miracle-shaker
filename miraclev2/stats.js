@@ -65,16 +65,16 @@ async function fetchHolders() {
 
 async function fetchVisits() {
   try {
-    // hits.sh - free visit counter
-    var r = await fetch('https://hits.sh/miracleshaker.com.json');
+    // visitor.6developer.com - free, no auth, CORS support
+    var r = await fetch('https://visitor.6developer.com/api/visit?domain=miracleshaker.com');
     var d = await r.json();
-    return d.value || d.count || d.hits || null;
+    return d.total || d.count || d.visitors || d.value || null;
   } catch(e) {
     try {
-      // fallback: api.web3forms (simple counter)
-      var r2 = await fetch('https://api.counterapi.dev/v1/miracleshaker/visits/hit');
+      // fallback: api.pageview.rest
+      var r2 = await fetch('https://api.pageview.rest/miracleshaker.com');
       var d2 = await r2.json();
-      return d2.count || d2.value || null;
+      return d2.total || d2.count || null;
     } catch(e2) { return null; }
   }
 }
