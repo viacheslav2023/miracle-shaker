@@ -28,7 +28,6 @@ var T = {
   }
 };
 
-var langs = ['en','ru','ua'];
 var lang = 'en';
 try { lang = localStorage.getItem('ms_lang') || 'en'; } catch(e){}
 if (!T[lang]) lang = 'en';
@@ -37,15 +36,10 @@ function applyLang(l) {
   if (!T[l]) return;
   lang = l;
   try { localStorage.setItem('ms_lang', l); } catch(e){}
-
-  // Update lang buttons (desktop + mobile)
   document.querySelectorAll('.lang-btn').forEach(function(b) {
     b.classList.toggle('active', b.dataset.lang === l);
   });
-
   var d = T[l];
-
-  // Nav ids
   [['nav-home',d.nav_home],['nav-shaker',d.nav_shaker],
    ['nav-nft',d.nav_nft],['nav-game',d.nav_game],
    ['nav-faq',d.nav_faq],['nav-buy',d.nav_buy]
@@ -53,34 +47,18 @@ function applyLang(l) {
     var el = document.getElementById(pair[0]);
     if (el) el.textContent = pair[1];
   });
-
-  // Also update slide-menu links by data-key
-  document.querySelectorAll('[data-nav-key]').forEach(function(el){
-    var key = el.getAttribute('data-nav-key');
-    if (d[key]) el.textContent = d[key];
-  });
-
-  // Wallet button
   var wb = document.getElementById('wallet-btn');
-  if (wb && !wb.classList.contains('connected')) {
-    wb.textContent = d.wallet_btn;
-  }
-
-  // All data-translated elements
+  if (wb && !wb.classList.contains('connected')) wb.textContent = d.wallet_btn;
   document.querySelectorAll('[data-'+l+']').forEach(function(el){
     var text = el.getAttribute('data-'+l);
     if (text) el.innerHTML = text;
   });
-  // Fallback for missing translations — use English
   if (l !== 'en') {
     document.querySelectorAll('[data-en]').forEach(function(el){
-      if (!el.getAttribute('data-'+l) && el.getAttribute('data-en')) {
+      if (!el.getAttribute('data-'+l) && el.getAttribute('data-en'))
         el.innerHTML = el.getAttribute('data-en');
-      }
     });
   }
-
-  // Footer
   var fc = document.getElementById('footer-copy');
   var fr = document.getElementById('footer-rights');
   if (fc) fc.textContent = d.footer_copy;
@@ -89,40 +67,26 @@ function applyLang(l) {
 
 // ── MENU ─────────────────────────────────────
 function openMenu() {
-  var menu = document.getElementById('slide-menu');
-  var overlay = document.getElementById('nav-overlay');
-  var burger = document.getElementById('nav-burger');
-  var menuText = document.getElementById('nav-menu-text');
-
-  if (menu) menu.style.transform = 'translateX(0)';
-  if (overlay) overlay.style.display = 'block';
+  var m = document.getElementById('slide-menu');
+  var o = document.getElementById('nav-overlay');
+  if (m) m.style.transform = 'translateX(0)';
+  if (o) o.style.display = 'block';
   document.body.style.overflow = 'hidden';
-
-  // Update burger button text/icon
-  if (menuText) menuText.textContent = '✕';
-  if (burger) burger.setAttribute('aria-expanded', 'true');
 }
 
 function closeMenu() {
-  var menu = document.getElementById('slide-menu');
-  var overlay = document.getElementById('nav-overlay');
-  var burger = document.getElementById('nav-burger');
-  var menuText = document.getElementById('nav-menu-text');
-
-  if (menu) menu.style.transform = 'translateX(100%)';
-  if (overlay) overlay.style.display = 'none';
+  var m = document.getElementById('slide-menu');
+  var o = document.getElementById('nav-overlay');
+  if (m) m.style.transform = 'translateX(100%)';
+  if (o) o.style.display = 'none';
   document.body.style.overflow = '';
-
-  // Restore burger button text
-  if (menuText) menuText.textContent = '☰';
-  if (burger) burger.setAttribute('aria-expanded', 'false');
 }
 
 function toggleMenu() {
-  var menu = document.getElementById('slide-menu');
-  if (!menu) return;
-  var isOpen = menu.style.transform === 'translateX(0px)' || menu.style.transform === 'translateX(0)';
-  if (isOpen) { closeMenu(); } else { openMenu(); }
+  var m = document.getElementById('slide-menu');
+  if (!m) return;
+  var open = m.style.transform === 'translateX(0px)' || m.style.transform === 'translateX(0)';
+  if (open) closeMenu(); else openMenu();
 }
 
 // ── WALLET ───────────────────────────────────
@@ -133,11 +97,13 @@ var RPC = 'https://mainnet.helius-rpc.com/?api-key=adf0dc62-3c25-4948-aa23-2ae24
 
 function showWalletModal() {
   if (walletPubkey) { disconnectWallet(); return; }
-  document.getElementById('wallet-modal').style.display = 'flex';
+  var m = document.getElementById('wallet-modal');
+  if (m) m.style.display = 'flex';
 }
 
 function closeWalletModal() {
-  document.getElementById('wallet-modal').style.display = 'none';
+  var m = document.getElementById('wallet-modal');
+  if (m) m.style.display = 'none';
 }
 
 async function rpc(method, params) {
@@ -178,20 +144,14 @@ function shortAddr(a) { return a.slice(0,4)+'...'+a.slice(-4); }
 async function updateWalletUI(pubkey) {
   walletPubkey = pubkey;
   var addr = pubkey.toString ? pubkey.toString() : String(pubkey);
-
   var wb = document.getElementById('wallet-btn');
   if (wb) { wb.textContent = shortAddr(addr); wb.classList.add('connected'); }
-
   var panel = document.getElementById('wallet-panel');
   if (panel) panel.style.display = 'block';
-
   var addrEl = document.getElementById('wp-addr');
   if (addrEl) addrEl.textContent = shortAddr(addr);
-
-  // fetch balances
   var sol = await getSolBalance(addr);
   var taco = await getTacoBalance(addr);
-
   var solEl = document.getElementById('wp-sol');
   var tacoEl = document.getElementById('wp-taco');
   if (solEl) solEl.textContent = fmt(sol,4) + ' SOL';
@@ -284,22 +244,46 @@ function initMaze() {
   }, 1100);
 }
 
+// ── MOBILE NAV ───────────────────────────────
+function initMobileNav() {
+  var isMobile = window.innerWidth <= 640;
+  var langGroup = document.querySelector('nav div[style*="gap:2px"]');
+  var navBuy = document.getElementById('nav-buy');
+
+  if (langGroup) langGroup.style.display = isMobile ? 'none' : '';
+  if (navBuy) navBuy.style.display = isMobile ? 'none' : '';
+
+  var slideMenu = document.getElementById('slide-menu');
+  var slideLang = document.getElementById('slide-lang-group');
+
+  if (isMobile && slideMenu && !slideLang) {
+    var langDiv = document.createElement('div');
+    langDiv.id = 'slide-lang-group';
+    langDiv.style.cssText = 'display:flex;gap:6px;padding:16px 0;border-top:1px solid #1e1e1e;margin-top:8px;';
+    ['en','ru','ua'].forEach(function(l) {
+      var btn = document.createElement('button');
+      btn.className = 'lang-btn';
+      btn.dataset.lang = l;
+      btn.textContent = l.toUpperCase();
+      btn.style.cssText = 'flex:1;font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:1px solid #2a2a2a;color:#555;padding:8px;cursor:pointer;';
+      if (l === lang) { btn.style.color = '#ff6b1a'; btn.style.borderColor = '#ff6b1a'; }
+      btn.addEventListener('click', function() { applyLang(l); closeMenu(); });
+      langDiv.appendChild(btn);
+    });
+    var menuBottom = slideMenu.querySelector('div[style*="margin-top:auto"]');
+    if (menuBottom) slideMenu.insertBefore(langDiv, menuBottom);
+    else slideMenu.appendChild(langDiv);
+  }
+
+  if (!isMobile && slideLang) {
+    slideLang.parentNode.removeChild(slideLang);
+  }
+}
+
 // ── INIT ─────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function(){
-
-  // ── BURGER / MENU BUTTON ──
-  // Support both id="nav-burger" AND any element with onclick="toggleMenu()"
-  // Also support the text "MENU" button pattern used in HTML
   var burger = document.getElementById('nav-burger');
-  if (burger) {
-    burger.addEventListener('click', toggleMenu);
-  }
-
-  // Also find burger by class in case id differs
-  var burgerByClass = document.querySelector('.nav-burger, .hamburger, [data-menu-toggle]');
-  if (burgerByClass && burgerByClass !== burger) {
-    burgerByClass.addEventListener('click', toggleMenu);
-  }
+  if (burger) burger.addEventListener('click', toggleMenu);
 
   var mclose = document.getElementById('menu-close');
   if (mclose) mclose.addEventListener('click', closeMenu);
@@ -307,25 +291,18 @@ document.addEventListener('DOMContentLoaded', function(){
   var overlay = document.getElementById('nav-overlay');
   if (overlay) overlay.addEventListener('click', closeMenu);
 
-  // Close menu when any slide-menu link is clicked
   document.querySelectorAll('#slide-menu a').forEach(function(a){
     a.addEventListener('click', closeMenu);
   });
 
-  // Close on Escape key
   document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape') {
-      closeMenu();
-      closeWalletModal();
-    }
+    if (e.key === 'Escape') { closeMenu(); closeWalletModal(); }
   });
 
-  // ── LANG BUTTONS ──
   document.querySelectorAll('.lang-btn').forEach(function(b){
     b.addEventListener('click', function(){ applyLang(b.dataset.lang); });
   });
 
-  // ── WALLET ──
   var wb = document.getElementById('wallet-btn');
   if (wb) wb.addEventListener('click', showWalletModal);
   var wmc = document.getElementById('wm-close');
@@ -339,76 +316,23 @@ document.addEventListener('DOMContentLoaded', function(){
   var discon = document.getElementById('wp-disconnect');
   if (discon) discon.addEventListener('click', disconnectWallet);
 
-  // ── SCROLL NAV BORDER ──
   var nav = document.querySelector('nav');
   window.addEventListener('scroll', function(){
     if (nav) nav.style.borderBottomColor = window.scrollY > 40 ? '#1e1e1e' : 'transparent';
   });
 
-  // ── ACTIVE LINK ──
   var path = window.location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('#slide-menu a[id]').forEach(function(a){
     var href = (a.getAttribute('href')||'').split('/').pop();
-    if (href === path) a.style.color = '#E8650A';
+    if (href === path) a.style.color = '#ff6b1a';
   });
 
   applyLang(lang);
   initReveal();
   initFAQ();
   initMaze();
+  initMobileNav();
   setTimeout(autoReconnect, 600);
 });
 
-// ── MOBILE NAV INIT ──────────────────────────
-function initMobileNav() {
-  // На мобильном скрываем lang-группу и BUY TACO из навбара
-  if (window.innerWidth <= 640) {
-    // Скрываем контейнер с lang кнопками (div с gap:2px background:#1e1e1e)
-    var langGroup = document.querySelector('nav div[style*="gap:2px"]');
-    if (langGroup) langGroup.style.display = 'none';
-
-    // Скрываем BUY TACO
-    var navBuy = document.getElementById('nav-buy');
-    if (navBuy) navBuy.style.display = 'none';
-  }
-
-  // Добавляем lang кнопки в slide-menu если их там нет
-  var slideMenu = document.getElementById('slide-menu');
-  if (slideMenu && !document.getElementById('slide-lang-group')) {
-    var langDiv = document.createElement('div');
-    langDiv.id = 'slide-lang-group';
-    langDiv.style.cssText = 'display:flex;gap:6px;padding:16px 0;border-top:1px solid #1e1e1e;margin-top:8px;';
-    langDiv.innerHTML = [
-      '<button class="lang-btn" data-lang="en" style="flex:1;font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:1px solid #2a2a2a;color:#555;padding:8px;cursor:pointer;transition:all 0.2s;">EN</button>',
-      '<button class="lang-btn" data-lang="ru" style="flex:1;font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:1px solid #2a2a2a;color:#555;padding:8px;cursor:pointer;transition:all 0.2s;">RU</button>',
-      '<button class="lang-btn" data-lang="ua" style="flex:1;font-family:monospace;font-size:9px;letter-spacing:1px;background:none;border:1px solid #2a2a2a;color:#555;padding:8px;cursor:pointer;transition:all 0.2s;">UA</button>'
-    ].join('');
-
-    // Вставляем перед кнопкой BUY TACO внизу меню
-    var menuBottom = slideMenu.querySelector('div[style*="margin-top:auto"]');
-    if (menuBottom) {
-      slideMenu.insertBefore(langDiv, menuBottom);
-    } else {
-      slideMenu.appendChild(langDiv);
-    }
-
-    // Навешиваем обработчики на новые кнопки
-    langDiv.querySelectorAll('.lang-btn').forEach(function(b) {
-      b.addEventListener('click', function() { applyLang(b.dataset.lang); closeMenu(); });
-    });
-
-    // Синхронизируем активный язык
-    langDiv.querySelectorAll('.lang-btn').forEach(function(b) {
-      b.style.color = b.dataset.lang === lang ? '#ff6b1a' : '#555';
-      b.style.borderColor = b.dataset.lang === lang ? '#ff6b1a' : '#2a2a2a';
-    });
-  }
-}
-
-// Вызываем при загрузке и ресайзе
-document.addEventListener('DOMContentLoaded', function() {
-  initMobileNav();
-});
-window.addEventListener('resize', function() {
-  initMobileNav();
-});
+window.addEventListener('resize', initMobileNav);
