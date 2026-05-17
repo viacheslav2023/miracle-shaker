@@ -65,10 +65,18 @@ async function fetchHolders() {
 
 async function fetchVisits() {
   try {
-    var r = await fetch('https://api.countapi.xyz/hit/miracleshaker.com/visits2026');
+    // hits.sh - free visit counter
+    var r = await fetch('https://hits.sh/miracleshaker.com.json');
     var d = await r.json();
-    return d.value||null;
-  } catch(e) { return null; }
+    return d.value || d.count || d.hits || null;
+  } catch(e) {
+    try {
+      // fallback: api.web3forms (simple counter)
+      var r2 = await fetch('https://api.counterapi.dev/v1/miracleshaker/visits/hit');
+      var d2 = await r2.json();
+      return d2.count || d2.value || null;
+    } catch(e2) { return null; }
+  }
 }
 
 function buildBlock() {
