@@ -2799,39 +2799,40 @@ const G={
     this.drops=this.drops.filter(d=>{d.t+=dt;d.life-=dt;return d.life>0&&d.lv===this.curLv;});
     // Mines update
     if(!this.mines) this.mines=[];
-    for(let i=this.mines.length-1;i>=0;i--){
-      const mn=this.mines[i];
+    for(var mi=this.mines.length-1;mi>=0;mi--){
+      var mn=this.mines[mi];
       mn.animT+=dt;
       if(!mn.armed){mn.armT-=dt;if(mn.armT<=0)mn.armed=true;}
       // Only trigger on current level
       if(mn.armed&&!mn.triggered&&mn.lv===this.curLv&&this.player&&!this.player.dead){
-        const dist2=D(mn.x,mn.y,this.player.x,this.player.y);
-        if(dist2<TS*1.2){
+        var mnDist=D(mn.x,mn.y,this.player.x,this.player.y);
+        if(mnDist<TS*1.5){
           // BOOM
           mn.triggered=true;
-          const BLAST=TS*6; // 6 cell radius
+          var BLAST=TS*6;
           this.player.takeDmg(60);
-          // Also damage nearby enemies
-          const blastRm=this.world.room(this.curLv,this.curGx,this.curGy);
-          if(blastRm) blastRm.enemies.forEach(e=>{
-            if(!e.dead&&D(e.x,e.y,mn.x,mn.y)<BLAST) e.hit(40);
-          });
-          // Explosion visual — orange expanding ring
-          for(let p2=0;p2<12;p2++){
-            const a=p2/12*Math.PI*2;
-            PROJS.push({x:mn.x,y:mn.y,vx:Math.cos(a)*220,vy:Math.sin(a)*220,
-              dmg:0,col:'#ff6600',r:8,fr:true,fx:'exp',life:0.5});
+          msg(T('💥 ВЗРЫВ! -60','💥 BOOM! -60'),'#ff6600');
+          var blastRm=this.world.room(this.curLv,this.curGx,this.curGy);
+          if(blastRm){
+            for(var mbi=0;mbi<blastRm.enemies.length;mbi++){
+              if(!blastRm.enemies[mbi].dead&&D(blastRm.enemies[mbi].x,blastRm.enemies[mbi].y,mn.x,mn.y)<BLAST)
+                blastRm.enemies[mbi].hit(40);
+            }
+          }
+          // Explosion particles
+          for(var mp=0;mp<12;mp++){
+            var ma=mp/12*Math.PI*2;
+            PROJS.push({x:mn.x,y:mn.y,vx:Math.cos(ma)*220,vy:Math.sin(ma)*220,dmg:0,col:'#ff6600',r:8,fr:true,fx:'exp',life:0.5});
           }
           PROJS.push({x:mn.x,y:mn.y,vx:0,vy:0,dmg:0,col:'#ffaa00',r:BLAST,fr:true,fx:'blast',life:0.35});
-          msg(T('💥 ВЗРЫВ!','💥 BOOM!'),'#ff6600');
-          SFX.bossAppear&&SFX.bossAppear(); // reuse deep boom sound
-          this.mines.splice(i,1);
+          SFX.bossAppear&&SFX.bossAppear();
+          this.mines.splice(mi,1);
           continue;
         }
       }
-      // Remove old mines after 30 sec or if on different level
-      if(mn.animT>30||mn.lv!==this.curLv&&mn.animT>5){
-        this.mines.splice(i,1);
+      // Remove old mines after 30 sec
+      if(mn.animT>30||(mn.lv!==this.curLv&&mn.animT>5)){
+        this.mines.splice(mi,1);
       }
     }
     // Poison cloud
