@@ -1413,7 +1413,7 @@ class World{
 const ED={
   troll:  {hp:2500,atk:55,spd:70,def:15,xp:200,coins:[30,60],drop:.8,col:'#2a1808',sz:22,sight:300,isBoss:true},
   lich:   {hp:1800,atk:38,spd:60,def:10,xp:180,coins:[25,50],drop:.8,col:'#0a0a20',sz:20,sight:320,isBoss:true},
-  dragon: {hp:3200,atk:65,spd:55,def:0,xp:250,coins:[40,80],drop:.8,col:'#081820',sz:24,sight:280,isBoss:true},
+  dragon: {hp:3200,atk:65,spd:55,def:0,xp:250,coins:[40,80],drop:.8,col:'#081820',sz:24,sight:99999,isBoss:true},
   bishop: {hp:500,atk:20,spd:95,def:0,xp:500,coins:[50,100],drop:.9,col:'#1a0030',sz:18,sight:999,isBoss:true},
   goblin: {hp:35,atk:8,spd:68,def:2,xp:15,coins:[2,6],drop:.15,col:'#244010',sz:10,sight:160},
   gnome:  {hp:22,atk:0,spd:58,def:4,xp:12,coins:[1,4],drop:.1, col:'#5a3010',sz:9, sight:140},
@@ -1447,7 +1447,8 @@ class Enemy{
       const imm=this._immunity||0;
       if(imm>0){
         d=Math.round(d*(1-imm));
-        if(d<=0){dmgN(this.x,this.y-this.sz,T('🛡 ИМП','🛡 IMM'),'#cc00ff');return;}
+        if(d<=0){dmgN(this.x,this.y-this.sz,'IMM!','#cc00ff');return;}
+        dmgN(this.x,this.y-this.sz,'-'+d,'#cc00ff');
       }
     }
     if(this.type==='lich') this._noHitT=0;
@@ -1531,13 +1532,14 @@ class Enemy{
       return ef.dur>0;
     });
     if(this.stunT>0||this.frozenT>0){this.vx*=.5;this.vy*=.5;}
-    if(this._isBoss&&this.type==='dragon')this._dragonCloneUpdate(dt);
-    else if(this._isBoss){
+    if(this._isBoss){
       // Boss always runs _aiBoss regardless of player state
       const pdx=player?player.x-this.x:0;
       const pdy=player?player.y-this.y:0;
       const pd=Math.hypot(pdx,pdy);
       this._aiBoss(dt,player||{x:this.x,y:this.y,dead:true},pdx,pdy,pd);
+      // Dragon clone timer runs alongside AI
+      if(this.type==='dragon')this._dragonCloneUpdate(dt);
     }else if(!player||player.dead){
       this._wander(dt);
     }else{
@@ -1621,6 +1623,22 @@ class Enemy{
   _aiBoss(dt,p,dx,dy,d){
     // Bishop has its own AI
     if(this._isEvil){this._aiBishop(dt,p);return;}
+    // Clone — chase and attack player always
+    if(this._isClone){
+      this.lv=G.curLv; // follow player level
+      this.gx=clamp(Math.floor(this.x/(RW*TS)),0,GRID-1);
+      this.gy=clamp(Math.floor(this.y/(RH*TS)),0,GRID-1);
+      if(p&&!p.dead){
+        this._to(p.x,p.y,90);
+        if(d<this.sz+24&&this.atkCd<=0){
+          p.takeDmg(this.atk||25);
+          this.atkCd=1.0;
+          SFX.hit();
+          dmgN(p.x,p.y-20,'-'+(this.atk||25),'#88ccff');
+        }
+      }
+      return;
+    }
     // Update room coords dynamically
     this.gx=clamp(Math.floor(this.x/(RW*TS)),0,GRID-1);
     this.gy=clamp(Math.floor(this.y/(RH*TS)),0,GRID-1);
@@ -1646,7 +1664,7 @@ class Enemy{
     // Chase player if on same level and in sight, else patrol
     const onSameLv=(G.curLv===this.lv);
     // Lich sees through walls, other bosses use normal sight
-    const sightRange=this.type==='lich'?99999:(this.d.sight||300);
+    const sightRange=(this.type==='lich'||this.type==='dragon')?99999:(this.d.sight||300);
     const inSight=!!p&&!p.dead&&d<sightRange;
     if(onSameLv&&inSight){
       this._to(p.x,p.y,this.spd);
@@ -1655,8 +1673,8 @@ class Enemy{
         this._to(this._patrolX,this._patrolY,this.spd*0.65);
     }
     // Melee
-    // Melee — always try if close enough on same level
-    if(onSameLv&&p&&!p.dead&&d<this.sz+24&&this.atkCd<=0){
+    // Melee — attack when close
+    if(p&&!p.dead&&d<this.sz+24&&this.atkCd<=0){
       p.takeDmg(this.atk);
       this.atkCd=1.0;
       SFX.hit();
@@ -2805,6 +2823,8 @@ const G={
     if(!this.world||!this.player||this.player.dead)return;
     this.sessionTime+=dt;
     this._timeDome=Math.max(0,this._timeDome-dt);
+    this._respawnT=(this._respawnT||0)+dt;
+    if(this._respawnT>=180){this._respawnT=0;this._respawnWave=(this._respawnWave||0)+1;this._doRespawn();}
     this.world.update(dt);
     const rm=this.world.room(this.curLv,this.curGx,this.curGy);
     const enemies=rm?rm.enemies:[];
@@ -2947,7 +2967,12 @@ const G={
       const imm3=Math.min(90,Math.round(10*Math.pow(2,age3/60)));
       bbar.style.display='block';
       document.getElementById('boss-name').textContent='👁 BISHOP | 🛡'+imm3+'%';
-      document.getElementById('boss-hp-fill').style.width=(this._bishop.hp/this._bishop.maxHp*100)+'%';
+      var bhpFill=document.getElementById('boss-hp-fill');
+    if(bhpFill){
+      bhpFill.style.width=(this._bishop.hp/this._bishop.maxHp*100)+'%';
+      var imm2=this._bishop._immunity||0;
+      bhpFill.style.background=imm2>0.5?'#cc00ff':'#ff4444';
+    }
     }
     const bossRm=this.world.room(this.curLv,1,1);
     const boss=bossRm&&bossRm.enemies.find(e=>e._isBoss&&!e.dead);
@@ -3303,6 +3328,32 @@ const G={
     SFX.bossAppear&&SFX.bossAppear();
     msg(T('👁 ДЕМОН «ЕПИСКОП» ЯВИЛСЯ!','👁 DEMON "BISHOP" APPEARED!'),'#cc00ff');
     setTimeout(function(){msg(T('☠ Его нельзя остановить...','☠ He cannot be stopped...'),'#880088');},2000);
+  },
+  _doRespawn(){
+    if(!this.world||!this.player)return;
+    var wave=this._respawnWave||1;
+    var mult=wave===1?1.2:wave===2?1.5:2.0;
+    msg(T('WAVE x'+mult+'!','WAVE x'+mult+'!'),'#ff4400');
+    G.shake&&G.shake(8,0.4);
+    for(var lv=0;lv<LEVELS;lv++) for(var gy2=0;gy2<GRID;gy2++) for(var gx2=0;gx2<GRID;gx2++){
+      var rm2=this.world.room(lv,gx2,gy2);
+      if(!rm2)continue;
+      var alive=rm2.enemies.filter(function(e){return !e.dead&&!e._isBoss;}).length;
+      var toAdd=Math.max(3,Math.round(alive*(mult-1)));
+      var types=['goblin','gnome','ogr','zombie','ghoul','cultist','shaman'];
+      var wt=[[.38,.14,.14,.1,.1,.07,.07],[.2,.1,.14,.18,.15,.12,.11],[.1,.06,.18,.14,.2,.16,.16]];
+      var w=wt[Math.min(lv,2)];
+      for(var i2=0;i2<toAdd;i2++){
+        for(var t2=0;t2<30;t2++){
+          var tx2=2+rnd(RW-4),ty2=2+rnd(RH-4);
+          if(!rm2.tiles[ty2]||rm2.tiles[ty2][tx2]!==TF)continue;
+          var type2='goblin',rv=Math.random(),acc2=0;
+          for(var j2=0;j2<types.length;j2++){acc2+=w[j2];if(rv<acc2){type2=types[j2];break;}}
+          rm2.enemies.push(new Enemy(type2,(gx2*RW+tx2+.5)*TS,(gy2*RH+ty2+.5)*TS,lv,gx2,gy2));
+          break;
+        }
+      }
+    }
   },
   onDeath(){
     SFX.stopBG();
