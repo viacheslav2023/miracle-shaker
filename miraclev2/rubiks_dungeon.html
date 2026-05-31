@@ -3392,7 +3392,16 @@ const G={
 
 // ─── Input ───────────────────────────────────────────────────
 document.addEventListener('keydown',e=>{
+  // Prevent browser scroll on game keys
+  if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' ','e'].includes(e.key.toLowerCase())){
+    if(G.state==='game') e.preventDefault();
+  }
   G.keys[e.key.toLowerCase()]=true;
+  // Also map arrow keys to wasd
+  if(e.key==='ArrowUp')   G.keys['w']=true;
+  if(e.key==='ArrowDown') G.keys['s']=true;
+  if(e.key==='ArrowLeft') G.keys['a']=true;
+  if(e.key==='ArrowRight')G.keys['d']=true;
   if(e.key==='Escape'){if(G.state==='inv')G.closeInv();if(G.state==='loot')G.closeLoot();}
   if((e.key==='i'||e.key==='I')&&G.state==='game')G.openInv();
   if((e.key==='i'||e.key==='I')&&G.state==='inv')G.closeInv();
@@ -3425,7 +3434,9 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('keyup',e=>G.keys[e.key.toLowerCase()]=false);
 
 // ─── Desktop click ───────────────────────────────────────────
+C.setAttribute('tabindex','0');
 C.addEventListener('click',e=>{
+  C.focus();
   if(G.state!=='game'||!G.player)return;
   const camX=G.player.x-C.width/2,camY=G.player.y-C.height/2;
   const wx=e.clientX+camX,wy=e.clientY+camY;
