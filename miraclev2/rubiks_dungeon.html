@@ -2,11 +2,11 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="apple-mobile-web-app-capable" content="yes"><style>::-webkit-scrollbar{display:none}html{overflow:hidden;overscroll-behavior:none}</style>
 <title>Rubik's Dungeon</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-body{background:#000;overflow:hidden;font-family:'Courier New',monospace;touch-action:none}
+body{background:#000;overflow:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:none;font-family:'Courier New',monospace;touch-action:none}
 #c{display:block;touch-action:none}
 .scr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;pointer-events:all}
 .hide{display:none!important}
@@ -1513,6 +1513,7 @@ class Enemy{
     if(this.dead){this.deathT=Math.max(0,this.deathT-dt);return;}
     if(G._timeDome>0)return;
     this.atkCd=Math.max(0,this.atkCd-dt);
+    if(this._isClone){this._cloneLife=(this._cloneLife||20)-dt;if(this._cloneLife<=0){this.hp=0;this._die();return;}}
     // Dragon clone lifetime
     if(this._isClone){
       this._cloneLife=(this._cloneLife||10)-dt;
@@ -1530,6 +1531,7 @@ class Enemy{
       return ef.dur>0;
     });
     if(this.stunT>0||this.frozenT>0){this.vx*=.5;this.vy*=.5;}
+    if(this._isBoss&&this.type==='dragon')this._dragonCloneUpdate(dt);
     else if(this._isBoss){
       // Boss always runs _aiBoss regardless of player state
       const pdx=player?player.x-this.x:0;
@@ -1590,6 +1592,32 @@ class Enemy{
     if(this.wanderT<=0){this.wanderT=2+Math.random()*3;const a=Math.random()*Math.PI*2,r=30+Math.random()*60;this.wanderX=this.x+Math.cos(a)*r;this.wanderY=this.y+Math.sin(a)*r;}
     this._to(this.wanderX,this.wanderY,this.spd*.4);this.vx*=.88;this.vy*=.88;
   }
+  _aiBishop(dt,p){
+    if(!p||p.dead)return;
+    var age=Math.max(0,(G.sessionTime||0)-(this._spawnTime||0));
+    var mult=1+Math.floor(age/60)*0.2;
+    this.atk=Math.round((this._baseAtk||60)*mult);
+    this.spd=Math.min((this._baseSpd||90)*mult,250);
+    this._immunity=Math.min(0.9,0.10*Math.pow(2,Math.floor(age/60)));
+    this.lv=G.curLv;
+    this.gx=clamp(Math.floor(this.x/(RW*TS)),0,GRID-1);
+    this.gy=clamp(Math.floor(this.y/(RH*TS)),0,GRID-1);
+    this._to(p.x,p.y,this.spd);
+    var bdd=Math.hypot(p.x-this.x,p.y-this.y)||1;
+    if(bdd<this.sz+20&&this.atkCd<=0){
+      p.takeDmg(this.atk);
+      this.atkCd=1.2;
+      SFX.hit();
+    }
+    this._teleportT=(this._teleportT||60)-dt;
+    if(this._teleportT<=0){
+      this._teleportT=60;
+      this.x=p.x+(Math.random()-.5)*TS*3;
+      this.y=p.y+(Math.random()-.5)*TS*3;
+      msg(T('Bishop Teleport!','Bishop Teleport!'),'#cc00ff');
+      G.shake&&G.shake(18,1.0);
+    }
+  }
   _aiBoss(dt,p,dx,dy,d){
     // Bishop has its own AI
     if(this._isEvil){this._aiBishop(dt,p);return;}
@@ -1641,58 +1669,35 @@ class Enemy{
         if(d<TS*4){p.stunT=Math.max(p.stunT,1);p.takeDmg(this.atk*0.5);dmgN(p.x,p.y-20,'STUN!','#ffcc44');}
         this._rockT=(this._rockT||0)-dt;
         if(this._rockT<=0&&d<TS*8){this._rockT=15;const l2=Math.hypot(dx,dy)||1;proj(this.x,this.y,dx/l2*180,dy/l2*180,this.atk*0.8,'#886644',14,false);msg(T('🪨 Тролль!','🪨 Rock!'),'#886644');}
+        // Армагеддон кд 30с
+        this._armT=(this._armT||30)-dt;
+        if(this._armT<=0&&d<TS*15){
+          this._armT=30;
+          for(var at=0;at<12;at++){
+            var aa3=at/12*Math.PI*2;
+            proj(this.x,this.y,Math.cos(aa3)*200,Math.sin(aa3)*200,40,'#ff4400',10,true);
+          }
+          p.takeDmg(this.atk*1.2);
+          p.stunT=Math.max(p.stunT,2);
+          msg(T('ARMAGEDDON!','ARMAGEDDON!'),'#ff4400');
+          G.shake&&G.shake(14,0.7);
+        }
+        this._hasReflect=true;
       }else if(this.type==='lich'){
         this._specT=12;
-        for(let i=0;i<8;i++){const a=i/8*Math.PI*2;proj(this.x,this.y,Math.cos(a)*140,Math.sin(a)*140,18,'#22cc44',9,false,'burn');}
+        for(var li=0;li<8;li++){var la=li/8*Math.PI*2;proj(this.x,this.y,Math.cos(la)*140,Math.sin(la)*140,18,'#22cc44',9,false,'burn');}
         this._lichRegen=Math.min((this._lichRegen||0)+0.5,5);
         msg(T('💀 Волна Лича!','💀 Lich Wave!'),'#22cc44');
-      }else if(this.type==='bishop'){
-      // Dark robed bishop with glowing eye
-      const age2=Math.max(0,(G.sessionTime||0)-(this._spawnTime||0));
-      const imm=Math.min(0.9,0.10*Math.pow(2,age2/60));
-      const purp='rgba(180,0,255,'+(0.7+imm*0.3)+')';
-      // Robe
-      X.fillStyle='#0a0018';
-      X.beginPath();X.moveTo(sx,sy-sz*1.8);X.lineTo(sx-sz*1.1,sy+sz*.7);X.lineTo(sx+sz*1.1,sy+sz*.7);X.closePath();X.fill();
-      // Inner robe glow
-      X.fillStyle='rgba(80,0,140,.4)';
-      X.beginPath();X.moveTo(sx,sy-sz*1.5);X.lineTo(sx-sz*.7,sy+sz*.5);X.lineTo(sx+sz*.7,sy+sz*.5);X.closePath();X.fill();
-      // Head
-      X.fillStyle='#0d0020';
-      X.beginPath();X.arc(sx,sy-sz*1.1,sz*.7,0,Math.PI*2);X.fill();
-      // Bishop hat (mitre)
-      X.fillStyle='#14003a';
-      X.beginPath();X.moveTo(sx-sz*.5,sy-sz*1.4);X.lineTo(sx,sy-sz*2.4);X.lineTo(sx+sz*.5,sy-sz*1.4);X.fill();
-      X.strokeStyle='rgba(180,0,255,.5)';X.lineWidth=1.5;
-      X.beginPath();X.moveTo(sx-sz*.5,sy-sz*1.4);X.lineTo(sx,sy-sz*2.4);X.lineTo(sx+sz*.5,sy-sz*1.4);X.stroke();
-      // Cross on hat
-      X.strokeStyle=purp;X.lineWidth=2;
-      X.beginPath();X.moveTo(sx,sy-sz*2.2);X.lineTo(sx,sy-sz*1.6);X.stroke();
-      X.beginPath();X.moveTo(sx-sz*.25,sy-sz*2.0);X.lineTo(sx+sz*.25,sy-sz*2.0);X.stroke();
-      // Glowing eyes
-      X.shadowColor='#cc00ff';X.shadowBlur=16+Math.sin(T*4)*6;
-      X.fillStyle=purp;
-      X.beginPath();X.arc(sx-sz*.25,sy-sz*1.15,sz*.16,0,Math.PI*2);X.fill();
-      X.beginPath();X.arc(sx+sz*.25,sy-sz*1.15,sz*.16,0,Math.PI*2);X.fill();
-      X.shadowBlur=0;
-      // Staff
-      X.strokeStyle='#2a0050';X.lineWidth=3;
-      X.beginPath();X.moveTo(sx+sz*.9,sy+sz*.6);X.lineTo(sx+sz*1.1,sy-sz*1.8);X.stroke();
-      // Staff orb
-      X.shadowColor='#cc00ff';X.shadowBlur=14+Math.sin(T*6)*4;
-      X.fillStyle=purp;
-      X.beginPath();X.arc(sx+sz*1.1,sy-sz*1.8,sz*.32,0,Math.PI*2);X.fill();
-      X.shadowBlur=0;
-      // Immunity aura
-      if(imm>0){
-        X.save();X.globalAlpha=imm*0.2+0.05*Math.sin(T*3);
-        X.fillStyle='#cc00ff';
-        X.beginPath();X.ellipse(sx,sy-sz*.4,sz*2.2,sz*2.8,0,0,Math.PI*2);X.fill();
-        X.restore();
-      }
-    }else if(this.type==='dragon'){
+      }else if(this.type==='dragon'){
         this._specT=8;
-        if(d<TS*7){p.frozenT=Math.max(p.frozenT,3);p.stunT=Math.max(p.stunT,1);p.takeDmg(this.atk*0.4);this.def=Math.min(this.def+3,80);dmgN(p.x,p.y-20,T('ЗАМОРОЗКА!','FROZEN!'),'#88ccff');msg(T('🐉 Заморозка!','🐉 Frozen!'),'#88ccff');}
+        this._hasReflect=true;
+        if(d<TS*7){
+          p.frozenT=Math.max(p.frozenT,3);
+          p.stunT=Math.max(p.stunT,1);
+          p.takeDmg(this.atk*0.4);
+          dmgN(p.x,p.y-20,'FROZEN!','#88ccff');
+          G.shake&&G.shake(10,0.5);
+        }
       }
     }
     // Lich passive regen — only works if NOT being hit
@@ -1710,6 +1715,26 @@ class Enemy{
         }
       }
     }
+  }
+  // Dragon clone timer — runs every frame independently
+  _dragonCloneUpdate(dt){
+    if(this.type!=='dragon'||this._isClone||this.dead)return;
+    this._cloneT=(this._cloneT===undefined?20:this._cloneT)-dt;
+    if(this._cloneT>0)return;
+    this._cloneT=20;
+    var rm=G.world&&(G.world.room(this.lv,this.gx,this.gy)||G.world.room(G.curLv,G.curGx,G.curGy));
+    if(!rm)return;
+    if(rm.enemies.filter(function(e){return !e.dead;}).length>=15)return;
+    for(var i=0;i<2;i++){
+      var a=Math.random()*Math.PI*2;
+      var cl=new Enemy('dragon',this.x+Math.cos(a)*TS*3,this.y+Math.sin(a)*TS*3,this.lv,this.gx,this.gy);
+      cl.maxHp=400;cl.hp=400;cl.atk=Math.round(this.atk*0.5);
+      cl.def=0;cl._isClone=true;cl._isBoss=true;cl._cloneLife=20;
+      rm.enemies.push(cl);
+    }
+    msg(T('CLONES x2!','CLONES x2!'),'#88ccff');
+    dmgN(this.x,this.y-40,'x2','#88ccff');
+    G.shake&&G.shake(10,0.5);
   }
   _ai(dt,p,dx,dy,d,allies){
     if(this.type==='goblin'){
@@ -2127,7 +2152,6 @@ class Player{
   }
   _applySpecialWeapon(wp){
     if(!wp||!wp.special)return;
-    var self=this;
     switch(wp.special){
       case 'arator':
         // Pulse wave
@@ -2146,25 +2170,25 @@ class Player{
         msg(T('📜 Сквозь стены 3 сек!','📜 Phase 3s!'),'#88cc44');
         break;
       case 'dwarfcrown':
-        var rm=G.world&&G.world.room(G.curLv,G.curGx,G.curGy);
+        const rm=G.world&&G.world.room(G.curLv,G.curGx,G.curGy);
         if(rm)rm.enemies.forEach(e=>{if(!e.dead&&D(e.x,e.y,this.x,this.y)<TS*5){e.hit(30);e.stun(3);}});
         msg(T('👑 Землетрясение!','👑 Earthquake!'),'#886644');break;
       case 'dscythe':
         // Death Scythe — bleed all nearby
-        var dsRm=G.world&&G.world.room(G.curLv,G.curGx,G.curGy);
+        const dsRm=G.world&&G.world.room(G.curLv,G.curGx,G.curGy);
         if(dsRm) dsRm.enemies.forEach(function(e){
-          if(!e.dead&&D(e.x,e.y,self.x,self.y)<TS*3.5){
+          if(!e.dead&&D(e.x,e.y,this.x,this.y)<TS*3.5){
             e.effects.push({type:'bleed',dur:6,val:10,acc:0});
             dmgN(e.x,e.y,'🩸','#cc2244');
           }
-        });
+        }.bind(this));
         msg(T('💀 Кровотечение!','💀 Death Bleed!'),'#cc2244');
         break;
       case 'paladin':
         this.heal(this.maxHp);this.boostT=5;
         msg(T('⚔ Благословление!','⚔ Blessing!'),'#ffeeaa');break;
       case 'ogrebl':
-        var rm2=G.world&&G.world.room(G.curLv,G.curGx,G.curGy);
+        const rm2=G.world&&G.world.room(G.curLv,G.curGx,G.curGy);
         if(rm2)rm2.enemies.forEach(e=>{if(!e.dead&&D(e.x,e.y,this.x,this.y)<TS*1.8){e.effects.push({type:'bleed',dur:5,val:8,acc:0});}});
         msg(T('💀 Кровотечение!','💀 Bleed!'),'#cc2200');break;
     }
@@ -2181,7 +2205,7 @@ class Player{
       case 'blink': this.x+=this.facing.x*TS*4;this.y+=this.facing.y*TS*4;msg(T('💨 Блинк!','💨 Blink!'),'#44ffcc');break;
       case 'fireball': proj(this.x,this.y,this.facing.x*250,this.facing.y*250,38,'#ff6600',8,true,'burn');msg(T('🔥 Огонь!','🔥 Fire!'),'#ff6600');break;
       case 'lightn':
-        var lh=0;enemies.filter(e=>!e.dead).slice(0,3).forEach(e=>{e.hit(this.tAtk*.85);if(lh===0){e.stun(.5);dmgN(e.x,e.y,'STUN','#ffe040');}lh++;});
+        let lh=0;enemies.filter(e=>!e.dead).slice(0,3).forEach(e=>{e.hit(this.tAtk*.85);if(lh===0){e.stun(.5);dmgN(e.x,e.y,'STUN','#ffe040');}lh++;});
         msg(T('⚡ Молния!','⚡ Lightning!'),'#ffe040');break;
       case 'heal50': this.heal(Math.round(this.maxHp*.5));msg(T('💊 +50% HP!','💊 +50% HP!'),'#44ff88');break;
       case 'prayer': enemies.forEach(e=>{if(!e.dead&&D(e.x,e.y,this.x,this.y)<TS*6){e.hit(22);e.silenced=2;}});msg(T('🙏 Молитва!','🙏 Prayer!'),'#fff');break;
@@ -2407,6 +2431,22 @@ class Player{
       lbl.textContent=sk.ico+(sk._lvl>1?' '+sk._lvl:'');
       bar.appendChild(lbl);
     });
+  }  _updateSkBar(){
+    const bar=document.getElementById('skbar');
+    const active=this.skills.filter(s=>!s.passive).slice(0,4);
+    const key=active.map(s=>s.id+'|'+(s._cd||0).toFixed(1)).join(',');
+    if(this._lastSkKey===key)return;
+    this._lastSkKey=key;
+    bar.innerHTML='';
+    active.forEach((sk,i)=>{
+      const btn=document.createElement('div');
+      btn.className='skbtn';
+      btn.style.borderColor=RAR[sk.r]?RAR[sk.r].col:'#888';
+      btn.textContent=sk.ico||'?';
+      if((sk._cd||0)>0){const cd=document.createElement('div');cd.className='skcd';cd.textContent=Math.ceil(sk._cd)+'s';btn.appendChild(cd);}
+      btn.onclick=()=>G.player.castSkill(sk.id,G.world&&G.world.room(G.curLv,G.curGx,G.curGy)?G.world.room(G.curLv,G.curGx,G.curGy).enemies:[]);
+      bar.appendChild(btn);
+    });
   }
 
 
@@ -2452,7 +2492,7 @@ class Player{
         effectMsg=T('⚡ Скор. атаки +','⚡ Atk Speed +')+item.perm_atkspd+'%';
       }
       if(item.perm_hp){
-        var bonus=Math.round(this.maxHp*(item.perm_hp/100));
+        const bonus=Math.round(this.maxHp*(item.perm_hp/100));
         this.maxHp+=bonus;
         this.hp=Math.min(this.maxHp,this.hp+bonus);
         effectMsg=T('❤ Макс. HP +','❤ Max HP +')+bonus+' (+'+item.perm_hp+'%)';
@@ -2592,12 +2632,20 @@ class Player{
     X.fillStyle='#181006';X.fillRect(sx-8,sy-4+bob,16,3);
     X.fillStyle='#604010';X.fillRect(sx-2,sy-5+bob,4,4);
     // Arms
-    const aa=this.atkArc>0?this.atkArc/this.atkArcMax*2.5:0;
+    // aa: взмах — aaRaw от 1 до 0 убывает (1=начало, 0=конец)
+    var aaRaw=this.atkArcMax>0&&this.atkArc>0?this.atkArc/this.atkArcMax:0;
+    // aaRaw: 1 в начале удара, 0 в конце — синус даёт горб
+    var aa=aaRaw>0?Math.sin((1-aaRaw)*Math.PI)*1.4:0;
     X.save();X.translate(sx-10,sy-12+bob);X.rotate(mv?Math.sin(this.walkA+Math.PI)*.2:-.12);
     X.fillStyle='#18160e';X.fillRect(-2,0,5,11);X.fillStyle='#1e1e2e';X.fillRect(-2,0,5,4);X.restore();
-    X.save();X.translate(sx+10,sy-12+bob);X.rotate(mv?Math.sin(this.walkA)*.2+aa:.12+aa);
+    // Weapon arm — rotates toward facing direction
+    // aa ограничен — только небольшой взмах вперёд
+    var aaClamp=Math.min(aa,1.4);
+    var wAngle=mv?Math.sin(this.walkA)*.15+aaClamp:.1+aaClamp;
+    X.save();X.translate(sx+10,sy-12+bob);
+    X.rotate(wAngle);
     X.fillStyle='#18160e';X.fillRect(-3,0,5,11);X.fillStyle='#1e1e2e';X.fillRect(-3,0,5,4);
-    const wp=this.equip.weapon;
+    var wp=this.equip.weapon;
     if(wp){
       if(wp.id&&wp.id.includes('scythe')){
         // Scythe blade
@@ -2613,11 +2661,48 @@ class Player{
         X.shadowColor='#5500bb';X.shadowBlur=10+Math.sin(Date.now()/400)*3;
         X.fillStyle='#7722bb';X.beginPath();X.arc(1,3,5,0,Math.PI*2);X.fill();X.shadowBlur=0;
       }else{
-        X.strokeStyle='#303038';X.lineWidth=3.5;X.beginPath();X.moveTo(1,3);X.lineTo(2,25);X.stroke();
-        X.fillStyle='#282830';X.fillRect(-5,6,12,3);X.fillStyle='#343442';X.fillRect(-4,6,10,1);
-        X.fillStyle='#585868';X.beginPath();X.moveTo(-1,3);X.lineTo(7,10);X.lineTo(2,20);X.lineTo(-2,15);X.fill();
-        X.fillStyle='#50401a';X.beginPath();X.arc(1,25,3,0,Math.PI*2);X.fill();
-        if(aa>0){X.save();X.globalAlpha=aa*.65;X.strokeStyle='rgba(150,170,255,.8)';X.shadowColor='#7788ff';X.shadowBlur=10;X.lineWidth=9;X.beginPath();X.moveTo(1,3);X.lineTo(2,20);X.stroke();X.restore();}
+        // Рукоять у кисти (y=0..6)
+        X.fillStyle='#50401a';X.beginPath();X.arc(1,0,3,0,Math.PI*2);X.fill();
+        X.strokeStyle='#6a5020';X.lineWidth=3;X.beginPath();X.moveTo(1,0);X.lineTo(1,-7);X.stroke();
+        // Гарда (y=-7)
+        X.fillStyle='#282830';X.fillRect(-6,-9,14,3);X.fillStyle='#343442';X.fillRect(-5,-9,12,1.5);
+        // Лезвие вверх (y=-9..-28)
+        X.strokeStyle='#303038';X.lineWidth=3.5;X.beginPath();X.moveTo(1,-9);X.lineTo(1,-28);X.stroke();
+        X.fillStyle='#585868';X.beginPath();X.moveTo(-2,-9);X.lineTo(4,-9);X.lineTo(2,-28);X.lineTo(0,-18);X.fill();
+        // Блик на лезвии
+        X.strokeStyle='rgba(200,210,255,0.4)';X.lineWidth=1;X.beginPath();X.moveTo(0,-10);X.lineTo(-1,-16);X.stroke();
+        // arc fx removed
+      }
+    }
+    X.restore(); // restore weapon arm save
+    // Свечение при ударе
+    if(aaRaw>0.1){
+      var glowAlpha=Math.sin(aaRaw*Math.PI)*0.7;
+      var glowR=12+aa*8;
+      X.save();
+      X.translate(sx+10,sy-12+bob);
+      X.rotate(aa);
+      X.globalAlpha=glowAlpha;
+      // Белая вспышка вдоль лезвия
+      X.shadowColor='#ffffff';X.shadowBlur=18;
+      X.strokeStyle='rgba(255,255,255,0.9)';X.lineWidth=2;
+      X.beginPath();X.moveTo(1,-9);X.lineTo(1,-28);X.stroke();
+      // Оранжевое свечение
+      X.shadowColor='#ff8800';X.shadowBlur=14;
+      X.strokeStyle='rgba(255,160,40,0.6)';X.lineWidth=4;
+      X.beginPath();X.moveTo(1,-9);X.lineTo(1,-28);X.stroke();
+      X.restore();
+      // Искры в точке удара
+      if(aaRaw>0.3&&aaRaw<0.7){
+        X.save();X.globalAlpha=glowAlpha*0.8;
+        for(var si=0;si<5;si++){
+          var sang=si/5*Math.PI*2;
+          var sr=6+si*2;
+          X.fillStyle=si%2?'#ffcc00':'#ff6600';
+          X.shadowColor='#ff8800';X.shadowBlur=6;
+          X.beginPath();X.arc(sx+10+Math.cos(sang)*sr,sy-20+bob+Math.sin(sang)*sr,1.5,0,Math.PI*2);X.fill();
+        }
+        X.restore();
       }
     }
     X.restore();
@@ -2641,11 +2726,11 @@ class Player{
     X.fillStyle='#080604';X.shadowBlur=0;
     X.fillRect(ed*1.5-2,-.5,2,1.6);X.fillRect(ed*1.5+3,-.5,2,1.6);
     X.restore();
-    if(this.atkArc>0){
-      X.save();X.globalAlpha=this.atkArc/this.atkArcMax*.65;
-      X.strokeStyle='rgba(170,190,255,.7)';X.lineWidth=4;X.shadowColor='#7788ff';X.shadowBlur=8;
-      X.beginPath();const ang=Math.atan2(this.facing.y,this.facing.x);X.arc(sx,sy-10,22,ang-.85,ang+.85);X.stroke();X.restore();
-    }
+    // attack arc visual removed
+
+
+
+
     X.restore();
   }
 }
@@ -2799,40 +2884,39 @@ const G={
     this.drops=this.drops.filter(d=>{d.t+=dt;d.life-=dt;return d.life>0&&d.lv===this.curLv;});
     // Mines update
     if(!this.mines) this.mines=[];
-    for(var mi=this.mines.length-1;mi>=0;mi--){
-      var mn=this.mines[mi];
+    for(let i=this.mines.length-1;i>=0;i--){
+      const mn=this.mines[i];
       mn.animT+=dt;
       if(!mn.armed){mn.armT-=dt;if(mn.armT<=0)mn.armed=true;}
       // Only trigger on current level
       if(mn.armed&&!mn.triggered&&mn.lv===this.curLv&&this.player&&!this.player.dead){
-        var mnDist=D(mn.x,mn.y,this.player.x,this.player.y);
-        if(mnDist<TS*1.5){
+        const dist2=D(mn.x,mn.y,this.player.x,this.player.y);
+        if(dist2<TS*1.2){
           // BOOM
           mn.triggered=true;
-          var BLAST=TS*6;
+          const BLAST=TS*6; // 6 cell radius
           this.player.takeDmg(60);
-          msg(T('💥 ВЗРЫВ! -60','💥 BOOM! -60'),'#ff6600');
-          var blastRm=this.world.room(this.curLv,this.curGx,this.curGy);
-          if(blastRm){
-            for(var mbi=0;mbi<blastRm.enemies.length;mbi++){
-              if(!blastRm.enemies[mbi].dead&&D(blastRm.enemies[mbi].x,blastRm.enemies[mbi].y,mn.x,mn.y)<BLAST)
-                blastRm.enemies[mbi].hit(40);
-            }
-          }
-          // Explosion particles
-          for(var mp=0;mp<12;mp++){
-            var ma=mp/12*Math.PI*2;
-            PROJS.push({x:mn.x,y:mn.y,vx:Math.cos(ma)*220,vy:Math.sin(ma)*220,dmg:0,col:'#ff6600',r:8,fr:true,fx:'exp',life:0.5});
+          // Also damage nearby enemies
+          const blastRm=this.world.room(this.curLv,this.curGx,this.curGy);
+          if(blastRm) blastRm.enemies.forEach(e=>{
+            if(!e.dead&&D(e.x,e.y,mn.x,mn.y)<BLAST) e.hit(40);
+          });
+          // Explosion visual — orange expanding ring
+          for(let p2=0;p2<12;p2++){
+            const a=p2/12*Math.PI*2;
+            PROJS.push({x:mn.x,y:mn.y,vx:Math.cos(a)*220,vy:Math.sin(a)*220,
+              dmg:0,col:'#ff6600',r:8,fr:true,fx:'exp',life:0.5});
           }
           PROJS.push({x:mn.x,y:mn.y,vx:0,vy:0,dmg:0,col:'#ffaa00',r:BLAST,fr:true,fx:'blast',life:0.35});
-          SFX.bossAppear&&SFX.bossAppear();
-          this.mines.splice(mi,1);
+          msg(T('💥 ВЗРЫВ!','💥 BOOM!'),'#ff6600');
+          SFX.bossAppear&&SFX.bossAppear(); // reuse deep boom sound
+          this.mines.splice(i,1);
           continue;
         }
       }
-      // Remove old mines after 30 sec
-      if(mn.animT>30||(mn.lv!==this.curLv&&mn.animT>5)){
-        this.mines.splice(mi,1);
+      // Remove old mines after 30 sec or if on different level
+      if(mn.animT>30||mn.lv!==this.curLv&&mn.animT>5){
+        this.mines.splice(i,1);
       }
     }
     // Poison cloud
